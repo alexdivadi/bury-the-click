@@ -151,6 +151,9 @@ h1 { margin: 0; color: var(--print); font-family: 'Brush Script MT', 'Snell Roun
 .lever-hardware { position: absolute; top: 13px; left: 25px; width: 110px; height: 60px; background: url('/lever-flipped.png') calc(50% + 3px) calc(50% - 1px) / 104px auto no-repeat; filter: grayscale(1) brightness(.68); }
 .lever-selector[data-position='0'] .lever-hardware { transform: scaleX(-1); }
 .lever-selector[data-position='1'] .lever-hardware { background-image: url('/lever-neutral.png'); background-position: center calc(50% + 2px); background-size: 90px auto; }
+.lever-selector::after { content: ''; position: absolute; z-index: 1; top: 13px; left: 25px; width: 110px; height: 60px; pointer-events: none; background: radial-gradient(ellipse 70% 65% at 50% 80%, #f1473d70, transparent 86%); mask: url('/lever-flipped.png') calc(50% + 3px) calc(50% - 1px) / 104px auto no-repeat; opacity: 0; }
+.lever-selector[data-position='0']::after { transform: scaleX(-1); }
+.lever-selector[data-position='1']::after { mask-image: url('/lever-neutral.png'); mask-position: center calc(50% + 2px); mask-size: 90px auto; }
 #subdivision-switch { position: absolute; z-index: 2; inset: 0; cursor: pointer; touch-action: none; }
 .lever-selector:has(#subdivision-switch:focus-visible) { outline: 2px solid #eee9dd; outline-offset: 3px; }
 .device-picker button, .calibrate-button, .text-button {
@@ -175,7 +178,10 @@ h1 { margin: 0; color: var(--print); font-family: 'Brush Script MT', 'Snell Roun
   0%, 47%, 49%, 82%, 84%, 100% { filter: brightness(1.25); box-shadow: 0 0 8px 2px #e5362d66, 0 0 20px 6px #e5362d24; }
   48%, 83% { filter: brightness(1.17); box-shadow: 0 0 7px 2px #e5362d5c, 0 0 18px 5px #e5362d20; }
 }
-.footswitch { width: 80px; height: 80px; margin-top: 7px; padding: 0; border: 0; background: url('/footswitch-photo.png') center / contain no-repeat; filter: drop-shadow(0 5px 4px #0009); }
+.footswitch { position: relative; width: 80px; height: 80px; margin-top: 7px; padding: 0; border: 0; background: url('/footswitch-photo.png') center / contain no-repeat; filter: drop-shadow(0 5px 4px #0009); }
+.footswitch::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 48% 32% at 50% 8%, #ef493f9c, transparent); mask: url('/footswitch-photo.png') center / contain no-repeat; mix-blend-mode: screen; opacity: 0; }
+.pedal:has(.status-light.running) .footswitch::after, .pedal:has(.status-light.running) .lever-selector::after { opacity: .7; animation: reflected-flicker 8s linear infinite; }
+@keyframes reflected-flicker { 0%, 47%, 49%, 82%, 84%, 100% { opacity: .7; } 48%, 83% { opacity: .65; } }
 .footswitch:active, .footswitch[aria-pressed='true'] { transform: translateY(2px); filter: drop-shadow(0 2px 2px #0009); }
 
 .overlay[hidden] { display: none; }
@@ -246,4 +252,4 @@ h1 { margin: 0; color: var(--print); font-family: 'Brush Script MT', 'Snell Roun
 }
 @media (max-width: 350px) { h1 { font-size: 25px; } }
 @media (max-height: 780px) and (min-width: 561px) { #app { padding: 8px; } .pedal { zoom: .91; } }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } .status-light.running { animation: none; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } .status-light.running, .pedal:has(.status-light.running) .footswitch::after, .pedal:has(.status-light.running) .lever-selector::after { animation: none; } }
