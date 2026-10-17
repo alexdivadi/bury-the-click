@@ -1,0 +1,24 @@
+.input-port {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-height: 87px;
+}
+.input-port .control-label {
+  writing-mode: horizontal-tb;
+}
+.input-jack {
+  width: 94px;
+  height: 75px;
+  padding: 0;
+  border: 0;
+  background: url('/input-jack-gunmetal.png') center / 130px auto no-repeat;
+  filter: brightness(0.72) saturate(0.5);
+}
+.input-jack:hover {
+  filter: brightness(0.88) saturate(0.5);
+}
+.input-jack:active {
+  transform: translateX(2px);
+}

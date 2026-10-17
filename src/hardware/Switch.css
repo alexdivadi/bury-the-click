@@ -1,0 +1,90 @@
+.lever-selector {
+  position: relative;
+  width: 160px;
+  height: 76px;
+}
+.lever-marks span {
+  position: absolute;
+  color: #cbc9c0;
+  font-family: 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+}
+.lever-marks span:first-child {
+  left: 32px;
+  top: 23px;
+}
+.lever-marks span:nth-child(2) {
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+}
+.lever-marks span:last-child {
+  right: 25px;
+  top: 23px;
+}
+.lever-selector--2 .lever-marks span:nth-child(2) {
+  left: auto;
+  right: 25px;
+  top: 23px;
+  transform: none;
+}
+.lever-hardware {
+  position: absolute;
+  top: 13px;
+  left: 25px;
+  width: 110px;
+  height: 60px;
+  background: url('/lever-flipped.png') calc(50% + 3px) calc(50% - 1px) / 104px auto no-repeat;
+  filter: grayscale(1) brightness(0.68);
+}
+.lever-selector[data-position='0'] .lever-hardware {
+  transform: scaleX(-1);
+}
+.lever-selector[data-position='1'] .lever-hardware {
+  background-image: url('/lever-neutral.png');
+  background-position: center calc(50% + 2px);
+  background-size: 90px auto;
+}
+.lever-selector::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  top: 13px;
+  left: 25px;
+  width: 110px;
+  height: 60px;
+  pointer-events: none;
+  background: radial-gradient(ellipse 70% 65% at 50% 80%, #f1473d70, transparent 86%);
+  mask: url('/lever-flipped.png') calc(50% + 3px) calc(50% - 1px) / 104px auto no-repeat;
+  opacity: 0;
+}
+.lever-selector[data-position='0']::after {
+  transform: scaleX(-1);
+}
+.lever-selector[data-position='1']::after {
+  mask-image: url('/lever-neutral.png');
+  mask-position: center calc(50% + 2px);
+  mask-size: 90px auto;
+}
+.lever-selector--2[data-position='1'] .lever-hardware {
+  background-image: url('/lever-flipped.png');
+  background-position: calc(50% + 3px) calc(50% - 1px);
+  background-size: 104px auto;
+}
+.lever-selector--2[data-position='1']::after {
+  mask-image: url('/lever-flipped.png');
+  mask-position: calc(50% + 3px) calc(50% - 1px);
+  mask-size: 104px auto;
+}
+.lever-hit-area {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  cursor: pointer;
+  touch-action: none;
+}
+.lever-selector:has(.lever-hit-area:focus-visible) {
+  outline: 2px solid #eee9dd;
+  outline-offset: 3px;
+}

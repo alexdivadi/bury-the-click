@@ -1,23 +1,8 @@
-import { beatPosition, TimingGrid, type Subdivision, type TimingEvent } from './timing.ts';
-
-export interface InputDevice { deviceId: string; label: string }
-export function cycleInputDevice(current: string, devices: InputDevice[], direction: -1 | 1): string {
-  const ids = ['', ...devices.map((device) => device.deviceId)];
-  return ids[(Math.max(0, ids.indexOf(current)) + direction + ids.length) % ids.length];
-}
+import { beatPosition, TimingGrid, type Subdivision, type TimingEvent } from '../timing/grid.ts';
 export interface AudioCallbacks {
   onTiming: (event: TimingEvent) => void;
   onSignal: (level: number, clipping: boolean) => void;
   onError: (message: string) => void;
-}
-
-export async function listInputs(): Promise<InputDevice[]> {
-  if (!navigator.mediaDevices?.enumerateDevices) return [];
-  const devices = await navigator.mediaDevices.enumerateDevices();
-  return devices.filter((device) => device.kind === 'audioinput').map((device, index) => ({
-    deviceId: device.deviceId,
-    label: device.label || `Audio input ${index + 1}`,
-  }));
 }
 
 export class WebAudioEngine {
@@ -37,50 +22,82 @@ export class WebAudioEngine {
   private startGeneration = 0;
   private callbacks: AudioCallbacks;
 
-  constructor(callbacks: AudioCallbacks) { this.callbacks = callbacks; }
-
-  get running(): boolean { return this.context !== null; }
-  getBeatPosition(): { beat: number; phase: number } | null {
-    return this.context && this.grid ? beatPosition(this.grid.anchor, this.bpm, this.context.currentTime) : null;
+  constructor(callbacks: AudioCallbacks) {
+    this.callbacks = callbacks;
   }
 
-  async start(deviceId: string, bpm: number, subdivision: Subdivision, sensitivity: number, calibrationOffsetMs: number, mode: 'practice' | 'calibration' = 'practice'): Promise<void> {
+  get running(): boolean {
+    return this.context !== null;
+  }
+  getBeatPosition(): { beat: number; phase: number } | null {
+    return this.context && this.grid
+      ? beatPosition(this.grid.anchor, this.bpm, this.context.currentTime)
+      : null;
+  }
+
+  async start(
+    deviceId: string,
+    bpm: number,
+    subdivision: Subdivision,
+    sensitivity: number,
+    calibrationOffsetMs: number,
+    mode: 'practice' | 'calibration' = 'practice',
+  ): Promise<void> {
     this.stop();
     const generation = this.startGeneration;
-    if (!navigator.mediaDevices?.getUserMedia || !window.AudioWorkletNode) throw new Error('This browser cannot process live audio. Use a current browser over HTTPS or localhost.');
+    if (!navigator.mediaDevices?.getUserMedia || !window.AudioWorkletNode)
+      throw new Error(
+        'This browser cannot process live audio. Use a current browser over HTTPS or localhost.',
+      );
     const context = new AudioContext({ latencyHint: 'interactive' });
     this.context = context;
     try {
       await context.resume(); // Request playback while the Start tap still has user activation.
-      if (generation !== this.startGeneration) throw new DOMException('Audio start cancelled', 'AbortError');
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: {
-        ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false,
-      } });
+      if (generation !== this.startGeneration)
+        throw new DOMException('Audio start cancelled', 'AbortError');
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+        },
+      });
       if (generation !== this.startGeneration) {
         stream.getTracks().forEach((track) => track.stop());
         throw new DOMException('Audio start cancelled', 'AbortError');
       }
       this.stream = stream;
       await context.audioWorklet.addModule('/onset-worklet.js');
-      if (generation !== this.startGeneration) throw new DOMException('Audio start cancelled', 'AbortError');
+      if (generation !== this.startGeneration)
+        throw new DOMException('Audio start cancelled', 'AbortError');
       this.source = context.createMediaStreamSource(this.stream);
-      this.detector = new AudioWorkletNode(context, 'bass-onset');
+      this.detector = new AudioWorkletNode(context, 'note-onset');
       this.detector.port.postMessage({ type: 'sensitivity', value: sensitivity });
       this.detector.port.onmessage = (message: MessageEvent) => {
-        if (message.data.type === 'signal') this.callbacks.onSignal(message.data.level, message.data.clipping);
+        if (message.data.type === 'signal')
+          this.callbacks.onSignal(message.data.level, message.data.clipping);
         if (message.data.type === 'onset' && this.grid) {
-          const event = this.grid.match(message.data.timestamp, message.data.amplitude, message.data.confidence);
+          const event = this.grid.match(
+            message.data.timestamp,
+            message.data.amplitude,
+            message.data.confidence,
+          );
           if (event) this.callbacks.onTiming(event);
         }
       };
       this.source.connect(this.detector);
       this.detector.connect(context.destination); // The worklet emits silence, but must remain in the rendering graph.
-      this.stream.getAudioTracks()[0].addEventListener('ended', () => this.callbacks.onError('Input disconnected. Select an input and start again.'), { once: true });
+      this.stream
+        .getAudioTracks()[0]
+        .addEventListener(
+          'ended',
+          () => this.callbacks.onError('Input disconnected. Select an input and start again.'),
+          { once: true },
+        );
       context.onstatechange = () => {
-        if (context.state === 'suspended' && this.running) this.callbacks.onError('Audio paused by the browser. Tap the switch to restart.');
+        if (context.state === 'suspended' && this.running)
+          this.callbacks.onError('Audio paused by the browser. Tap the switch to restart.');
       };
       this.bpm = bpm;
       this.subdivision = subdivision;
@@ -95,9 +112,17 @@ export class WebAudioEngine {
     }
   }
 
-  setTempo(bpm: number): void { this.bpm = bpm; if (this.context) this.reanchor(); }
-  setSubdivision(subdivision: Subdivision): void { this.subdivision = subdivision; if (this.context) this.reanchor(); }
-  setSensitivity(value: number): void { this.detector?.port.postMessage({ type: 'sensitivity', value }); }
+  setTempo(bpm: number): void {
+    this.bpm = bpm;
+    if (this.context) this.reanchor();
+  }
+  setSubdivision(subdivision: Subdivision): void {
+    this.subdivision = subdivision;
+    if (this.context) this.reanchor();
+  }
+  setSensitivity(value: number): void {
+    this.detector?.port.postMessage({ type: 'sensitivity', value });
+  }
   setCalibration(value: number): void {
     this.calibrationOffsetMs = value;
     if (this.grid) this.grid = new TimingGrid(this.grid.anchor, this.bpm, this.subdivision, value);
@@ -107,14 +132,20 @@ export class WebAudioEngine {
     if (!this.context) return;
     this.nextClick = this.context.currentTime + 0.12;
     this.clickIndex = 0;
-    this.grid = new TimingGrid(this.nextClick, this.bpm, this.subdivision, this.calibrationOffsetMs);
+    this.grid = new TimingGrid(
+      this.nextClick,
+      this.bpm,
+      this.subdivision,
+      this.calibrationOffsetMs,
+    );
   }
 
   private scheduleClicks(): void {
     const context = this.context;
     if (!context || context.state !== 'running') return;
     while (this.nextClick < context.currentTime + 0.1) {
-      if (this.nextClick >= context.currentTime) this.playClick(this.nextClick, this.clickIndex % 4 === 0);
+      if (this.nextClick >= context.currentTime)
+        this.playClick(this.nextClick, this.clickIndex % 4 === 0);
       this.nextClick += 60 / this.bpm;
       this.clickIndex++;
     }
@@ -142,7 +173,11 @@ export class WebAudioEngine {
     gain.gain.setTargetAtTime(0.0025, context.currentTime, 0.08);
     gain.connect(context.destination);
     this.humGain = gain;
-    for (const [frequency, level] of [[60, 1], [120, 0.28], [180, 0.08]]) {
+    for (const [frequency, level] of [
+      [60, 1],
+      [120, 0.28],
+      [180, 0.08],
+    ]) {
       const oscillator = context.createOscillator();
       const partial = context.createGain();
       oscillator.type = 'sine';
@@ -160,14 +195,20 @@ export class WebAudioEngine {
     this.scheduler = null;
     this.grid = null;
     if (this.context) this.humGain?.gain.setValueAtTime(0, this.context.currentTime);
-    this.humOscillators.forEach((oscillator) => { oscillator.stop(); oscillator.disconnect(); });
+    this.humOscillators.forEach((oscillator) => {
+      oscillator.stop();
+      oscillator.disconnect();
+    });
     this.humOscillators = [];
     this.humGain?.disconnect();
     this.humGain = null;
     this.detector?.disconnect();
     this.source?.disconnect();
     this.stream?.getTracks().forEach((track) => track.stop());
-    if (this.context) { void this.context.close(); this.context.onstatechange = null; }
+    if (this.context) {
+      void this.context.close();
+      this.context.onstatechange = null;
+    }
     this.detector = null;
     this.source = null;
     this.stream = null;

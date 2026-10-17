@@ -1,0 +1,184 @@
+.calibration-face {
+  display: flex;
+  align-items: center;
+  gap: 23px;
+  padding: 5px 0 24px;
+}
+.cal-beat {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  width: 96px;
+  height: 96px;
+  border: 2px solid #7b9990;
+  border-radius: 50%;
+  transition: background 50ms linear;
+}
+.cal-beat small {
+  font-size: 11px;
+}
+.cal-beat strong {
+  font-family: Menlo, 'SFMono-Regular', monospace;
+  font-size: 39px;
+  font-weight: 400;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.cal-beat.pulse {
+  border-color: var(--red);
+  background: var(--red);
+  color: #111213;
+}
+.cal-count {
+  display: flex;
+  flex-direction: column;
+  color: var(--screen-ink);
+}
+.cal-count strong {
+  font-family: Menlo, 'SFMono-Regular', monospace;
+  font-size: 54px;
+  font-weight: 400;
+  line-height: 1;
+}
+.cal-count span {
+  color: #aebeb7;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.cal-progress {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 5px;
+  height: 9px;
+}
+.cal-progress span {
+  background: #3d5450;
+}
+.cal-progress span.heard {
+  background: #d5dfd7;
+}
+.cal-monitor {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-top: 17px;
+  color: #b8c5bf;
+  font-size: 11px;
+}
+.cal-monitor-track {
+  flex: 1;
+  height: 3px;
+  background: #3d5450;
+}
+.cal-monitor-track i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: #d5dfd7;
+  transition: width 120ms linear;
+}
+.cal-hint {
+  margin: 12px 0 0;
+  color: #b8c5bf;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.calibration-card {
+  width: min(100%, 430px);
+  min-height: 370px;
+  padding: 27px;
+  border: 1px solid #5c6260;
+  border-radius: 0;
+  background:
+    linear-gradient(90deg, #171a1a 0%, #171a1aea 55%, #0e1112dc 100%),
+    url('/calibration-fretboard.png') right center / 52% auto no-repeat,
+    #0e1112;
+  box-shadow:
+    0 18px 40px #000c,
+    inset 0 0 0 5px #0b0d0d,
+    inset 0 0 0 6px #62676455;
+  color: #e8e7df;
+}
+.calibration-card .close-button {
+  top: 21px;
+  right: 25px;
+  color: #e8e7df;
+}
+.calibration-card h2 {
+  margin: 0 0 8px;
+  font-family: 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  text-transform: uppercase;
+}
+.calibration-card .overlay-copy {
+  margin: 0;
+  color: #c3c4bf;
+}
+.calibration-card .calibration-face {
+  gap: 21px;
+  padding: 28px 0 24px;
+}
+.calibration-card .cal-beat {
+  width: 78px;
+  height: 78px;
+  border: 1px solid #63777c;
+  border-radius: 0;
+  background: #101819;
+}
+.calibration-card .cal-beat small {
+  color: #9baaaa;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.calibration-card .cal-beat strong {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 34px;
+  font-weight: 600;
+}
+.calibration-card .cal-beat.pulse {
+  border-color: #6cabc6;
+  background: #344d59;
+  color: #f2f4f2;
+}
+.calibration-card .cal-count strong {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 48px;
+  font-weight: 600;
+}
+.calibration-card .cal-count span {
+  color: #aab0ac;
+}
+.calibration-card .cal-progress {
+  height: 7px;
+  gap: 4px;
+}
+.calibration-card .cal-progress span {
+  background: #293a3e;
+}
+.calibration-card .cal-progress span.heard {
+  background: #6cabc6;
+}
+.calibration-card .cal-monitor {
+  margin-top: 18px;
+  color: #aab0ac;
+  font-size: 11px;
+}
+.calibration-card .cal-monitor-track {
+  height: 7px;
+  background: #293a3e;
+}
+.calibration-card .cal-monitor-track i {
+  background: #6cabc6;
+}
+.calibration-card .cal-hint {
+  min-height: 18px;
+  margin: 12px 0 0;
+  color: #aab0ac;
+}
+.calibration-card .cal-hint:empty {
+  visibility: hidden;
+}

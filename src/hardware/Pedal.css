@@ -1,0 +1,83 @@
+.pedal {
+  --print: #e0ded7;
+  --screen-ink: #d5dfd7;
+  --lcd-ink: #28334e;
+  --lcd-muted: #57647f;
+  --red: #ee4842;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 536px);
+  min-height: 706px;
+  padding: 25px 32px 20px;
+  border: 2px solid #222324;
+  border-radius: 13px;
+  background:
+    linear-gradient(#08090a50, #08090a50),
+    url('/powder-coat.png') center / cover no-repeat;
+  box-shadow:
+    inset 0 1px #ffffff12,
+    0 5px 0 #090a0b,
+    0 22px 42px #0005;
+}
+.pedal::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1px solid #ddd9cfb0;
+  border-radius: 7px;
+  pointer-events: none;
+}
+.pedal::after {
+  content: '';
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  border-radius: 11px;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 85% 32% at 20% 0%, #ffffff13, transparent 72%),
+    linear-gradient(115deg, transparent 29%, #ffffff08 48%, transparent 68%),
+    radial-gradient(ellipse 90% 35% at 75% 100%, #00000012, transparent 75%);
+}
+.pedal--woodgrain {
+  background: repeating-linear-gradient(96deg, #39271d 0 4px, #4b3324 5px 11px, #241a16 12px 16px);
+}
+.pedal--plain {
+  background: #1a1c1c;
+}
+.screw {
+  position: absolute;
+  z-index: 1;
+  width: 9px;
+  height: 9px;
+  border: 1px solid #060707;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #878987, #343637 45%, #101112 75%);
+}
+.screw::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 1px;
+  width: 6px;
+  border-top: 1px solid #090a0b;
+  transform: rotate(-35deg);
+}
+.screw-tl {
+  top: 14px;
+  left: 14px;
+}
+.screw-tr {
+  top: 14px;
+  right: 14px;
+}
+.screw-bl {
+  bottom: 14px;
+  left: 14px;
+}
+.screw-br {
+  bottom: 14px;
+  right: 14px;
+}

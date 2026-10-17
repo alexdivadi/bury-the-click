@@ -1,0 +1,279 @@
+.device-picker button,
+.calibrate-button,
+.text-button {
+  min-height: 38px;
+  border: 1px solid #5e6160;
+  border-radius: 3px;
+  background: linear-gradient(#242627, #141617);
+  box-shadow:
+    inset 0 1px #ffffff19,
+    0 3px 0 #070808;
+  color: #deddd5;
+}
+.device-picker button:active,
+.calibrate-button:active,
+.text-button:active {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 1px #ffffff19,
+    0 1px 0 #070808;
+}
+
+.field-heading,
+.signal-heading,
+.calibration-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.field-heading,
+.signal-heading {
+  font-size: 12px;
+}
+.field-heading span:last-child,
+.signal-heading span:last-child {
+  color: #95aaa3;
+  font-size: 11px;
+  text-align: right;
+}
+.device-picker {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 42px;
+  gap: 8px;
+  align-items: center;
+  margin-top: 9px;
+}
+.device-picker button {
+  padding: 0;
+  font-size: 28px;
+  line-height: 1;
+}
+.device-picker button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.device-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  font-size: 12px;
+}
+.signal-section {
+  margin-top: 22px;
+}
+.signal-meter {
+  position: relative;
+  height: 11px;
+  margin-top: 9px;
+  overflow: hidden;
+  border: 1px solid #61716d;
+  background: repeating-linear-gradient(
+    90deg,
+    #293432 0 calc(10% - 3px),
+    #0b1215 calc(10% - 3px) 10%
+  );
+}
+.signal-meter > span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: #bdd1c5;
+  transition: width 120ms linear;
+}
+.signal-meter > i {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: 78%;
+  border-left: 2px solid var(--red);
+}
+.signal-meter.clipping > span {
+  background: var(--red);
+}
+.calibration-block {
+  margin-top: 25px;
+  padding-top: 19px;
+  border-top: 1px solid #8ea4a044;
+}
+.calibration-heading h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 450;
+}
+.calibration-heading .calibration-value {
+  color: #aabbb2;
+  font-family: Menlo, 'SFMono-Regular', monospace;
+  font-size: 12px;
+}
+.calibration-block p {
+  margin: 9px 0 16px;
+}
+.cal-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.calibrate-button {
+  flex: 1;
+  padding: 0 9px;
+  font-size: 12px;
+}
+.calibrate-button:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+.text-button {
+  min-width: 54px;
+  font-size: 12px;
+}
+.calibration-block p {
+  color: #b8c5bf;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.input-card {
+  width: min(100%, 430px);
+  min-height: 370px;
+  padding: 27px;
+  border: 1px solid #5c6260;
+  border-radius: 0;
+  background:
+    linear-gradient(125deg, #171a1ad8, #0e1112e5),
+    url('/input-microphone.png') right top / 100% auto no-repeat,
+    #101314;
+  box-shadow:
+    0 18px 40px #000c,
+    inset 0 0 0 5px #0b0d0d,
+    inset 0 0 0 6px #62676455;
+  color: #e8e7df;
+}
+.input-card .close-button {
+  top: 21px;
+  right: 25px;
+  color: #e8e7df;
+}
+.manual-intro {
+  padding: 0 0 23px;
+}
+.input-card h2 {
+  margin: 0 0 8px;
+  font-family: 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  text-transform: uppercase;
+}
+.input-card .overlay-copy {
+  max-width: 310px;
+  margin: 0;
+  color: #c3c4bf;
+  font-size: 12px;
+}
+.manual-section {
+  padding: 0 0 22px;
+}
+.input-card .field-heading,
+.input-card .signal-heading {
+  align-items: center;
+  color: #e8e7df;
+  font-size: 12px;
+  font-weight: 700;
+}
+.input-card .field-heading span:last-child,
+.input-card .signal-heading span:last-child {
+  color: #aab0ac;
+  font-weight: 400;
+}
+.input-card .device-picker {
+  grid-template-columns: 38px minmax(0, 1fr) 38px;
+  gap: 0;
+  margin-top: 11px;
+  border: 1px solid #858d8b;
+  background: #090d0f;
+}
+.input-card .device-picker button {
+  min-height: 39px;
+  border: 0;
+  border-radius: 0;
+  background: #252a2a;
+  box-shadow: none;
+  font-size: 24px;
+}
+.input-card .device-picker button:first-child {
+  border-right: 1px solid #858d8b;
+}
+.input-card .device-picker button:last-child {
+  border-left: 1px solid #858d8b;
+}
+.input-card .device-name {
+  padding: 0 8px;
+  color: #e4e8e3;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 12px;
+}
+.input-card .signal-section,
+.input-card .calibration-block {
+  margin-top: 0;
+}
+.input-card .signal-meter {
+  height: 13px;
+  margin-top: 12px;
+  border-color: #848e8b;
+  background: repeating-linear-gradient(
+    90deg,
+    #263432 0 calc(10% - 2px),
+    #101516 calc(10% - 2px) 10%
+  );
+}
+.input-card .signal-meter > span {
+  background: #6cabc6;
+}
+.input-card .signal-meter.clipping > span {
+  background: #d85d54;
+}
+.input-card .calibration-block {
+  padding-top: 0;
+  padding-bottom: 0;
+  border: 0;
+}
+.input-card .calibration-heading h3 {
+  font-size: 12px;
+  font-weight: 700;
+}
+.input-card .calibration-heading .calibration-value {
+  padding: 4px 6px;
+  border: 1px solid #4f5b59;
+  background: #090d0f;
+  color: #d9e1db;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 11px;
+}
+.input-card .cal-actions {
+  gap: 8px;
+  margin-top: 12px;
+}
+.input-card .calibrate-button,
+.input-card .text-button {
+  min-height: 38px;
+  border-color: #63777c;
+  border-radius: 0;
+  background: #33484e;
+  box-shadow: none;
+  color: #e6e9e5;
+  font-weight: 700;
+}
+.input-card .calibrate-button {
+  padding: 0 12px;
+}
+.input-card .calibrate-button:hover {
+  background: #3c555c;
+}
+.input-card .text-button {
+  min-width: 55px;
+  background: #242929;
+  color: #e2e5df;
+}

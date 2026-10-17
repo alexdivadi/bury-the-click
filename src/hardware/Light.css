@@ -1,0 +1,48 @@
+.status-light {
+  position: absolute;
+  top: 7px;
+  left: calc(50% - 10px);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: url('/status-lamp.png') center / contain no-repeat;
+  filter: brightness(0.28) saturate(0.5);
+}
+.status-light.running {
+  filter: brightness(1.25);
+  box-shadow:
+    0 0 8px 2px #e5362d66,
+    0 0 20px 6px #e5362d24;
+  animation: lamp-flicker 8s linear infinite;
+}
+.status-light.warning {
+  filter: hue-rotate(42deg) brightness(1.1) drop-shadow(0 0 5px #dca34b);
+}
+.status-light.blue {
+  filter: hue-rotate(205deg) brightness(1.2);
+  box-shadow: 0 0 10px #3499e080;
+}
+.status-light.green {
+  filter: hue-rotate(105deg) brightness(1.2);
+  box-shadow: 0 0 10px #4db96780;
+}
+@keyframes lamp-flicker {
+  0%,
+  47%,
+  49%,
+  82%,
+  84%,
+  100% {
+    filter: brightness(1.25);
+    box-shadow:
+      0 0 8px 2px #e5362d66,
+      0 0 20px 6px #e5362d24;
+  }
+  48%,
+  83% {
+    filter: brightness(1.17);
+    box-shadow:
+      0 0 7px 2px #e5362d5c,
+      0 0 18px 5px #e5362d20;
+  }
+}

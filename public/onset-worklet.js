@@ -1,5 +1,5 @@
 // AudioWorklet globals are supplied by the browser's audio rendering thread.
-class BassOnsetProcessor extends AudioWorkletProcessor {
+class NoteOnsetProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
     this.previousInput = 0;
@@ -57,4 +57,4 @@ class BassOnsetProcessor extends AudioWorkletProcessor {
   }
 }
 
-registerProcessor('bass-onset', BassOnsetProcessor);
+registerProcessor('note-onset', NoteOnsetProcessor);

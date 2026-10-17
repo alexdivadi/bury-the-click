@@ -1,0 +1,41 @@
+.knob-control {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+}
+.knob {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin: 0 0 3px;
+  touch-action: none;
+  cursor: ew-resize;
+  border-radius: 50%;
+  box-shadow: 0 6px 7px #0008;
+}
+.knob::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 1px dashed #d0cec288;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.knob::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse 80% 45% at 26% 7%, #ffffff19, transparent 78%),
+    linear-gradient(115deg, #ffffff08, transparent 42%, #00000028 84%);
+  pointer-events: none;
+}
+.knob-indicator {
+  position: absolute;
+  inset: 0;
+  background: url('/knob-matte.png') center / contain no-repeat;
+  transform: rotate(var(--rotation, 0deg));
+  pointer-events: none;
+}

@@ -32,6 +32,8 @@ npm run preview
 
 Open the preview URL, then use your browser's install command. The app shell works offline after its first load; live input still needs an available audio device.
 
+The code map and instructions for changing controls or adding another pedal are in [Architecture](docs/ARCHITECTURE.md).
+
 ## Verify
 
 ```sh

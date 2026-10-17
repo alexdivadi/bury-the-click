@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { beatPosition, median, sessionMetrics, TimingGrid } from '../src/timing.ts';
+import { beatPosition, TimingGrid } from '../src/timing/grid.ts';
+import { median, sessionMetrics } from '../src/timing/metrics.ts';
 
 test('matches early and late notes on the audio clock', () => {
   const grid = new TimingGrid(1, 80, 1);

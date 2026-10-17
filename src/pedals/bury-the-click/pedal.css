@@ -1,0 +1,158 @@
+.brand {
+  position: absolute;
+  right: 30px;
+  bottom: 35px;
+  text-align: right;
+}
+.brand h1 {
+  margin: 0;
+  color: var(--print);
+  font-family: 'Brush Script MT', 'Snell Roundhand', 'Apple Chancery', cursive;
+  font-size: 41px;
+  font-weight: 400;
+  line-height: 0.72;
+  letter-spacing: 0;
+}
+.model {
+  display: block;
+  margin-top: 5px;
+  color: #b4b4ad;
+  font-family: 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 9px;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+}
+
+.control-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  padding: 20px 38px 0;
+}
+
+.routing-row {
+  display: flex;
+  justify-content: center;
+  min-height: 103px;
+  padding: 7px 30px 0;
+}
+.routing-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.pedal-footer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  margin-top: auto;
+  padding: 21px 0 8px;
+}
+
+@media (max-width: 560px) {
+  #app {
+    padding: 7px 36px 7px 7px;
+    align-items: start;
+  }
+  .pedal {
+    width: 100%;
+    min-height: calc(100dvh - 14px);
+    padding: 22px 20px 16px;
+  }
+  .brand {
+    right: 22px;
+    bottom: 31px;
+  }
+  .control-row {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .routing-row {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+@media (max-width: 390px) {
+  #app {
+    padding-right: 22px;
+  }
+  .brand h1 {
+    font-size: 30px;
+  }
+  .model {
+    font-size: 8px;
+  }
+  .display-window {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .timing-readout strong {
+    font-size: 39px;
+  }
+  .tempo-numeral {
+    font-size: 23px;
+  }
+  .display-main {
+    grid-template-columns: minmax(0, 1fr) 68px;
+  }
+  .display-labels {
+    grid-template-columns: minmax(0, 1fr) 78px;
+  }
+  .display-labels {
+    margin-left: 11px;
+    margin-right: 11px;
+  }
+  .display-stats strong {
+    font-size: 16px;
+  }
+  .display-legend {
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 8px;
+  }
+  .routing-row {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .input-jack {
+    width: 82px;
+    background-size: 118px auto;
+  }
+  .control-label {
+    font-size: 9px;
+  }
+}
+@media (max-width: 350px) {
+  .brand h1 {
+    font-size: 25px;
+  }
+}
+@media (max-height: 780px) and (min-width: 561px) {
+  #app {
+    padding: 8px;
+  }
+  .pedal {
+    zoom: 0.91;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+  .status-light.running,
+  .pedal:has(.status-light.running) .footswitch::after,
+  .pedal:has(.status-light.running) .lever-selector::after,
+  .meter-needle.hit {
+    animation: none;
+  }
+  .meter-needle.hit {
+    opacity: 1;
+  }
+}
