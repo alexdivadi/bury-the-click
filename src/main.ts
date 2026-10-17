@@ -56,7 +56,7 @@ let connecting = false;
 let beatFrame = 0;
 let runnerStep = -1;
 const runner = element<HTMLElement>('#beat-runner');
-const runnerCells = Array.from({ length: 32 }, () => document.createElement('span'));
+const runnerCells = Array.from({ length: 33 }, () => document.createElement('span'));
 runner.append(...runnerCells);
 
 function calibrationKey(): string { return `btc-calibration:${selectedDevice || 'default'}`; }
@@ -204,7 +204,8 @@ function updateRunning(running: boolean): void {
 }
 
 function renderRunner(phase: number | null): void {
-  const step = phase === null ? -1 : Math.min(31, Math.floor(phase * runnerCells.length));
+  // The center segment meets the click; the sweep wraps halfway between beats.
+  const step = phase === null ? -1 : Math.floor(((phase + 0.5) % 1) * runnerCells.length);
   if (step === runnerStep) return;
   runnerStep = step;
   const trail = [0.85, 0.5, 0.28, 0.16, 0.1];
