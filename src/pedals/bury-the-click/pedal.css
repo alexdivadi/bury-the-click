@@ -60,7 +60,6 @@
   }
   .pedal {
     width: 100%;
-    min-height: calc(100dvh - 14px);
     padding: 22px 20px 16px;
   }
   .brand {

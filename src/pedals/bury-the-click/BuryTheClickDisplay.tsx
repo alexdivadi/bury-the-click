@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { LCDScreen } from '../../hardware/LCDScreen.tsx';
-import { averageAbsoluteError } from '../../timing/metrics.ts';
+import { averageOffset } from '../../timing/metrics.ts';
 import type { Meter, TimingEvent } from '../../timing/grid.ts';
+import { TEXT } from '../../text.ts';
 
 const trail = [0.85, 0.5, 0.28, 0.16, 0.1];
 
@@ -13,6 +14,7 @@ function BeatTrack({
   tone,
   needlePosition,
   latest,
+  inputFlashTimestamp,
 }: {
   running: boolean;
   bpm: number;
@@ -21,6 +23,7 @@ function BeatTrack({
   tone: string;
   needlePosition: number;
   latest: TimingEvent | null;
+  inputFlashTimestamp: number | null;
 }) {
   const runner = useRef<HTMLDivElement>(null);
   const strip = useRef<HTMLDivElement>(null);
@@ -55,9 +58,12 @@ function BeatTrack({
   }, [running, bpm, getBeatPosition]);
   return (
     <>
-      <div className={`meter-track ${tone}`} aria-label="Timing position from early to late">
+      <div className={`meter-track ${tone}`} aria-label={TEXT.display.timingPosition}>
         <div className="meter-center" />
         <div className="meter-ideal" />
+        {inputFlashTimestamp !== null && (
+          <div key={inputFlashTimestamp} className="meter-input-flash" aria-hidden="true" />
+        )}
         <div
           key={latest?.timestamp ?? 'empty'}
           className={`meter-needle ${latest ? 'hit' : ''}`}
@@ -70,7 +76,7 @@ function BeatTrack({
         </div>
       </div>
       <div className="display-activity">
-        <div className="beat-strip" ref={strip} aria-label={`${meter} beat click`}>
+        <div className="beat-strip" ref={strip} aria-label={TEXT.display.beatClick(meter)}>
           {Array.from({ length: meter }, (_, index) => (
             <span key={index} />
           ))}
@@ -103,31 +109,36 @@ export function BuryTheClickDisplay({
   running: boolean;
   getBeatPosition: () => { beat: number; phase: number } | null;
 }) {
-  const averageError = averageAbsoluteError(events);
-  const offset = latest ? Math.round(latest.correctedOffsetMs) : null;
+  const bias = averageOffset(events);
+  const offset = latest ? Math.round(latest.subdivisionOffsetMs) : null;
   const tone =
     offset === null ? '' : Math.abs(offset) <= 20 ? 'on-time' : offset < 0 ? 'early' : 'late';
-  const needlePosition = latest ? 50 + Math.max(-50, Math.min(50, latest.correctedOffsetMs)) : 50;
+  // The full track spans ±200 ms, leaving visible room between a small miss and a large one.
+  const needlePosition = latest
+    ? 50 + Math.max(-50, Math.min(50, latest.subdivisionOffsetMs / 4))
+    : 50;
   return (
     <>
       <div className="display-labels" aria-hidden="true">
-        <span>OFFSET / MS</span>
-        <span>CLICK / BPM</span>
+        <span>{TEXT.display.offset}</span>
+        <span>{TEXT.display.clickBpm}</span>
       </div>
-      <LCDScreen label="Live practice display">
+      <LCDScreen label={TEXT.display.liveDisplay}>
         <div className="display-main">
           <div className={`timing-readout ${tone}`} aria-live="polite">
-            <strong>{offset === null ? '--' : `${offset > 0 ? '+' : ''}${offset}`}</strong>
+            <strong>
+              {offset === null ? TEXT.display.noReading : `${offset > 0 ? '+' : ''}${offset}`}
+            </strong>
             <span>
               {offset === null
                 ? running
-                  ? 'Play with the click'
-                  : 'Waiting for a note'
+                  ? TEXT.display.playWithClick
+                  : TEXT.display.waitingForNote
                 : tone === 'on-time'
-                  ? 'On time'
+                  ? TEXT.display.onTime
                   : tone === 'early'
-                    ? 'Early'
-                    : 'Late'}
+                    ? TEXT.display.early
+                    : TEXT.display.late}
             </span>
           </div>
           <div className="tempo-numeral">
@@ -142,6 +153,7 @@ export function BuryTheClickDisplay({
           tone={tone}
           needlePosition={needlePosition}
           latest={latest}
+          inputFlashTimestamp={events.at(-1)?.timestamp ?? null}
         />
         <div className="display-footer">
           <span className="display-input-name">{inputName}</span>
@@ -150,17 +162,19 @@ export function BuryTheClickDisplay({
           </span>
         </div>
         <div className="display-stats">
-          <strong>{events.length ? averageError : '--'}</strong>
-          <strong>{pocketPercent ?? '--'}</strong>
+          <strong>
+            {events.length ? `${bias > 0 ? '+' : ''}${bias}` : TEXT.display.noReading}
+          </strong>
+          <strong>{pocketPercent ?? TEXT.display.noReading}</strong>
           <strong>{gain}</strong>
           <strong>{meter}/4</strong>
         </div>
       </LCDScreen>
       <div className="display-legend" aria-hidden="true">
-        <span>AVG MS</span>
-        <span>IN POCKET %</span>
-        <span>GAIN %</span>
-        <span>METER</span>
+        <span>{TEXT.display.bias}</span>
+        <span>{TEXT.display.pocket}</span>
+        <span>{TEXT.display.gain}</span>
+        <span>{TEXT.display.meter}</span>
       </div>
     </>
   );

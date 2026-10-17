@@ -4,9 +4,12 @@ import { Footswitch } from '../../hardware/Footswitch.tsx';
 import { Light } from '../../hardware/Light.tsx';
 import { Pedal } from '../../hardware/Pedal.tsx';
 import { Switch } from '../../hardware/Switch.tsx';
+import { DEBUG_MENU_ENABLED } from '../../debug.ts';
 import type { Meter } from '../../timing/grid.ts';
+import { TEXT } from '../../text.ts';
 import { CalibrationManual } from './CalibrationManual.tsx';
 import { BuryTheClickDisplay } from './BuryTheClickDisplay.tsx';
+import { DebugOverlay } from './DebugOverlay.tsx';
 import { InputManual } from './InputManual.tsx';
 import { usePedalSession } from './usePedalSession.ts';
 
@@ -18,7 +21,7 @@ export function BuryTheClickPedal() {
   const meterPosition = meters.indexOf(session.meter);
   return (
     <>
-      <Pedal texture="powder-coat" label="Bury the Click timing trainer">
+      <Pedal texture="powder-coat" label={TEXT.pedal.label}>
         <AudioJack onPress={session.openInput} />
         <BuryTheClickDisplay
           bpm={session.bpm}
@@ -27,14 +30,14 @@ export function BuryTheClickPedal() {
           events={session.events}
           latest={session.latest}
           pocketPercent={session.pocketPercent}
-          inputName={session.deviceId ? session.deviceName : 'Default input'}
+          inputName={session.deviceId ? session.deviceName : TEXT.pedal.defaultInput}
           status={session.status.text}
           running={running}
           getBeatPosition={session.getBeatPosition}
         />
-        <section className="control-row" aria-label="Practice controls">
+        <section className="control-row" aria-label={TEXT.pedal.practiceControls}>
           <Dial
-            label="Tempo"
+            label={TEXT.pedal.tempo}
             value={session.bpm}
             min={40}
             max={200}
@@ -43,7 +46,7 @@ export function BuryTheClickPedal() {
             onChange={session.changeBpm}
           />
           <Dial
-            label="Input gain"
+            label={TEXT.pedal.inputGain}
             value={session.gain}
             min={0}
             max={100}
@@ -52,11 +55,11 @@ export function BuryTheClickPedal() {
             onChange={session.changeGain}
           />
         </section>
-        <section className="routing-row" aria-label="Time signature control">
+        <section className="routing-row" aria-label={TEXT.pedal.timeSignatureControl}>
           <Switch
-            label="Time signature"
-            options={['3/4', '4/4', '5/4']}
-            marks={['3/4', '4/4', '5/4']}
+            label={TEXT.pedal.timeSignature}
+            options={TEXT.pedal.meterOptions}
+            marks={TEXT.pedal.meterOptions}
             value={meterPosition}
             onChange={(position) => session.changeMeter(meters[position])}
           />
@@ -68,15 +71,15 @@ export function BuryTheClickPedal() {
             disabled={session.mode === 'connecting' || session.mode === 'calibrating'}
             onPress={() => void session.togglePractice()}
           />
-          <span className="switch-label">START / STOP</span>
+          <span className="switch-label">{TEXT.pedal.startStop}</span>
         </footer>
         <header className="brand">
           <h1>
-            Bury the
+            {TEXT.pedal.brandFirstLine}
             <br />
-            Click
+            {TEXT.pedal.brandSecondLine}
           </h1>
-          <span className="model">No. 01</span>
+          <span className="model">{TEXT.pedal.model}</span>
         </header>
       </Pedal>
       {session.modal === 'input' && (
@@ -101,6 +104,15 @@ export function BuryTheClickPedal() {
           hint={session.hint}
           getBeatPosition={session.getBeatPosition}
           onCancel={session.cancelCalibration}
+        />
+      )}
+      {DEBUG_MENU_ENABLED && (
+        <DebugOverlay
+          entries={session.debugEntries}
+          mode={session.mode}
+          inputName={session.deviceName}
+          signal={session.signal}
+          getSessionElapsed={session.getSessionElapsed}
         />
       )}
     </>

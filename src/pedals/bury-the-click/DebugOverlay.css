@@ -1,0 +1,123 @@
+.debug-toggle,
+.debug-panel {
+  position: fixed;
+  z-index: 50;
+  color: #e4ece9;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+.debug-toggle {
+  left: 12px;
+  bottom: 12px;
+  padding: 7px 10px;
+  border: 1px solid #b4c6c077;
+  border-radius: 3px;
+  background: #0b1516d9;
+  font-size: 11px;
+}
+.debug-panel {
+  width: min(720px, calc(100vw - 16px));
+  max-height: min(62vh, 540px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #b4c6c088;
+  border-radius: 4px;
+  background: #0b1516db;
+  box-shadow: 0 10px 30px #0008;
+  backdrop-filter: blur(8px);
+  font-size: 11px;
+}
+.debug-heading,
+.debug-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.debug-heading {
+  border-bottom: 1px solid #ffffff33;
+}
+.debug-handle,
+.debug-close {
+  border: 0;
+  background: none;
+  color: inherit;
+}
+.debug-handle {
+  flex: 1;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.debug-handle:active {
+  cursor: grabbing;
+}
+.debug-close {
+  padding: 4px 12px;
+  font-size: 21px;
+}
+.debug-summary {
+  gap: 10px;
+  padding: 10px 12px 3px;
+  font-variant-numeric: tabular-nums;
+}
+.debug-source {
+  margin: 0;
+  padding: 0 12px 9px;
+  overflow: hidden;
+  color: #b8c9c7;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.debug-table-wrap {
+  min-height: 80px;
+  overflow: auto;
+  border-top: 1px solid #ffffff33;
+}
+.debug-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.debug-panel th,
+.debug-panel td {
+  padding: 5px 7px;
+  text-align: right;
+}
+.debug-panel th:first-child,
+.debug-panel td:first-child,
+.debug-panel th:last-child,
+.debug-panel td:last-child {
+  text-align: left;
+}
+.debug-panel th {
+  position: sticky;
+  top: 0;
+  background: #18282a;
+  color: #c4d2d0;
+}
+.debug-panel tbody tr:nth-child(odd) {
+  background: #ffffff0a;
+}
+.debug-duplicate,
+.debug-low-confidence,
+.debug-click-bleed {
+  color: #a5b5b1;
+}
+.debug-calibration {
+  color: #a7d0dd;
+}
+.debug-empty,
+.debug-note {
+  margin: 0;
+  padding: 9px 12px;
+  color: #b8c9c7;
+}
+.debug-note {
+  border-top: 1px solid #ffffff33;
+  font-size: 10px;
+  line-height: 1.35;
+}

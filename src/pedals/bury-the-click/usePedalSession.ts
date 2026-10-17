@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cycleInputDevice, listInputs, type InputDevice } from '../../audio/inputDevices.ts';
 import { WebAudioEngine } from '../../audio/WebAudioEngine.ts';
+import { isConfidentOnset } from '../../audio/onsetPolicy.ts';
+import { DEBUG_MENU_ENABLED } from '../../debug.ts';
 import { median } from '../../timing/metrics.ts';
-import { advancePocketState, initialPocketState } from '../../timing/pocket.ts';
+import { advancePocketState, initialPocketState, scorePocketWindow } from '../../timing/pocket.ts';
 import type { PocketState } from '../../timing/pocket.ts';
 import type { Meter, TimingEvent } from '../../timing/grid.ts';
+import { TEXT } from '../../text.ts';
 import { readCalibration, removeCalibration, writeCalibration } from './calibration.ts';
+import type { DebugEntry } from './DebugOverlay.tsx';
 import { emptySignal, signalLevel, useInputPreview } from './useInputPreview.ts';
 
 type Mode = 'idle' | 'connecting' | 'running' | 'calibrating';
@@ -18,10 +22,11 @@ export function usePedalSession() {
   const [meter, setMeter] = useState<Meter>(4);
   const [mode, setModeState] = useState<Mode>('idle');
   const [modal, setModalState] = useState<Modal>(null);
-  const [status, setStatus] = useState<Status>({ text: 'Ready', tone: 'ready' });
+  const [status, setStatus] = useState<Status>({ text: TEXT.status.ready, tone: 'ready' });
   const [events, setEvents] = useState<TimingEvent[]>([]);
   const [latest, setLatest] = useState<TimingEvent | null>(null);
   const [pocketPercent, setPocketPercent] = useState<number | null>(null);
+  const [pocketMessage, setPocketMessage] = useState<string>(TEXT.status.pocket.collecting);
   const [devices, setDevices] = useState<InputDevice[]>([]);
   const [deviceId, setDeviceId] = useState('');
   const [deviceNote, setDeviceNote] = useState('');
@@ -29,6 +34,7 @@ export function usePedalSession() {
   const [samples, setSamples] = useState<number[]>([]);
   const [hint, setHint] = useState('');
   const [practiceSignal, setPracticeSignal] = useState(emptySignal);
+  const [debugEntries, setDebugEntries] = useState<DebugEntry[]>([]);
   const preview = useInputPreview();
 
   const modeRef = useRef<Mode>('idle');
@@ -50,9 +56,9 @@ export function usePedalSession() {
     signal: (level: number, clipping: boolean) => void;
     error: (message: string) => void;
   }>({
-    timing: () => {},
-    signal: () => {},
-    error: () => {},
+    timing: () => { },
+    signal: () => { },
+    error: () => { },
   });
   const [audio] = useState(
     () =>
@@ -79,6 +85,7 @@ export function usePedalSession() {
     pocketEventsRef.current = [];
     pocketStateRef.current = initialPocketState;
     setPocketPercent(null);
+    setPocketMessage(TEXT.status.pocket.collecting);
   };
   const stopPocketTimer = () => {
     if (pocketTimer.current !== null) window.clearInterval(pocketTimer.current);
@@ -97,26 +104,25 @@ export function usePedalSession() {
         const saved = readCalibration('');
         setCalibration(saved);
         audio.setCalibration(saved.value);
-        if (modeRef.current === 'running')
-          handlers.current.error('Input disconnected. Select an input and start again.');
+        if (modeRef.current === 'running') handlers.current.error(TEXT.error.inputDisconnected);
       }
       const selectedName = deviceRef.current
         ? inputs.find((input) => input.deviceId === deviceRef.current)?.label ||
-          'System default input'
-        : 'System default input';
+        TEXT.device.defaultInput
+        : TEXT.device.defaultInput;
       setDeviceNote(
         /bluetooth|airpods|wireless/i.test(selectedName)
-          ? 'Wireless delay may affect timing'
+          ? TEXT.device.wirelessDelay
           : inputs.length
-            ? `${inputs.length} available`
-            : 'Permission needed to list inputs',
+            ? TEXT.device.available(inputs.length)
+            : TEXT.device.permissionNeeded,
       );
     } catch {
-      setDeviceNote('Unable to list audio inputs.');
+      setDeviceNote(TEXT.device.listUnavailable);
     }
   }, [audio]);
 
-  const stopPractice = (message = 'Stopped · tap to start') => {
+  const stopPractice = (message: string = TEXT.status.stopped) => {
     request.current++;
     audio.stop();
     stopQuietTimer();
@@ -153,15 +159,49 @@ export function usePedalSession() {
     writeCalibration(deviceRef.current, value);
     setCalibration({ value, saved: true });
     audio.setCalibration(value);
-    setStatus({ text: `Calibrated · ${Math.round(value)} ms offset`, tone: 'ready' });
+    setStatus({ text: TEXT.status.calibrated(value), tone: 'ready' });
     openInput();
   };
 
   handlers.current = {
     timing: (event) => {
-      // A ringing note can trigger the detector repeatedly on one click.
-      if (event.expectedTimestamp === lastSlot.current) return;
-      lastSlot.current = event.expectedTimestamp;
+      if (modeRef.current !== 'running' && modeRef.current !== 'calibrating') return;
+      const lowConfidence = !isConfidentOnset(event.confidence);
+      const slot =
+        modeRef.current === 'calibrating'
+          ? event.expectedTimestamp
+          : event.subdivisionExpectedTimestamp;
+      const duplicate = slot === lastSlot.current;
+      const result: DebugEntry['result'] = event.clickBleed
+        ? 'click-bleed'
+        : lowConfidence
+          ? 'low-confidence'
+          : duplicate
+            ? 'duplicate'
+            : modeRef.current === 'calibrating'
+              ? 'calibration'
+              : 'accepted';
+      if (DEBUG_MENU_ENABLED)
+        setDebugEntries((previous) =>
+          [
+            ...previous,
+            {
+              elapsed: audio.getSessionElapsed(event.timestamp),
+              measure: event.subdivisionMeasureIndex + 1,
+              beat: event.subdivisionBeat,
+              subdivision: event.subdivision,
+              rawOffsetMs: event.rawOffsetMs,
+              subdivisionRawOffsetMs: event.subdivisionRawOffsetMs,
+              subdivisionOffsetMs: event.subdivisionOffsetMs,
+              amplitude: event.amplitude,
+              confidence: event.confidence,
+              result,
+            },
+          ].slice(-100),
+        );
+      // A ringing note can trigger the detector repeatedly in one subdivision.
+      if (event.clickBleed || lowConfidence || duplicate) return;
+      lastSlot.current = slot;
       if (modeRef.current === 'calibrating') {
         const next = [...samplesRef.current, event.rawOffsetMs];
         samplesRef.current = next;
@@ -174,21 +214,28 @@ export function usePedalSession() {
       eventsRef.current = next;
       pocketEventsRef.current = [...pocketEventsRef.current, event].slice(-128);
       setEvents(next);
+      setStatus((previous) =>
+        previous.text === TEXT.status.noInputSignal
+          ? { text: TEXT.status.grooving, tone: 'running' }
+          : previous,
+      );
+      // Offbeat subdivisions inform the trace and pocket score, but the LCD
+      // timing hit represents only the audible quarter-note click.
+      if (event.subdivision !== 0) return;
       setLatest(event);
-      const offset = Math.round(event.correctedOffsetMs);
-      const onTime = Math.abs(offset) <= 20;
-      setStatus({
-        text: `Beat ${event.beat} · ${onTime ? 'On time' : offset < 0 ? 'Ahead of the click' : 'Behind the click'}`,
-        tone: 'running',
-      });
     },
     signal: (level, clipping) => {
       if (level > 0.0003) lastAudible.current = performance.now();
       setPracticeSignal(signalLevel(level, clipping));
       if (modeRef.current !== 'running') return;
-      if (clipping) setStatus({ text: 'Input clipping · lower your gain', tone: 'warning' });
-      else if (level > 0.001 && level < 0.3 && !eventsRef.current.length)
-        setStatus({ text: 'Listening · play with the click', tone: 'running' });
+      if (clipping) setStatus({ text: TEXT.status.clipping, tone: 'warning' });
+      else if (level > 0.001 && level < 0.3)
+        setStatus((previous) =>
+          previous.tone === 'warning' &&
+            (previous.text === TEXT.status.clipping || previous.text === TEXT.status.noInputSignal)
+            ? { text: TEXT.status.grooving, tone: 'running' }
+            : previous,
+        );
     },
     error: (message) => {
       if (modeRef.current === 'calibrating') {
@@ -225,7 +272,7 @@ export function usePedalSession() {
     const saved = readCalibration(next);
     setCalibration(saved);
     audio.setCalibration(saved.value);
-    if (modeRef.current === 'running') stopPractice('Input changed · tap to start');
+    if (modeRef.current === 'running') stopPractice(TEXT.status.inputChanged);
     if (modalRef.current === 'input') void preview.start(next, () => void refreshDevices());
   };
 
@@ -237,23 +284,24 @@ export function usePedalSession() {
     if (modeRef.current !== 'idle') return;
     preview.stop();
     setMode('connecting');
-    setStatus({ text: 'Connecting audio…', tone: 'ready' });
+    setStatus({ text: TEXT.status.connectingAudio, tone: 'ready' });
     const currentRequest = ++request.current;
     try {
       await audio.start(deviceRef.current, bpm, meter, gain, calibration.value);
       if (currentRequest !== request.current) return;
       eventsRef.current = [];
+      setDebugEntries([]);
       resetPocket();
       setEvents([]);
       setLatest(null);
       lastSlot.current = Number.NEGATIVE_INFINITY;
       lastAudible.current = performance.now();
       setMode('running');
-      setStatus({ text: 'Listening · play with the click', tone: 'running' });
+      setStatus({ text: TEXT.status.pocket.collecting, tone: 'running' });
       void refreshDevices();
       quietTimer.current = window.setInterval(() => {
         if (!eventsRef.current.length && performance.now() - lastAudible.current > 8000)
-          setStatus({ text: 'No input signal · check connection', tone: 'warning' });
+          setStatus({ text: TEXT.status.noInputSignal, tone: 'warning' });
       }, 3000);
       pocketTimer.current = window.setInterval(() => {
         const next = advancePocketState(
@@ -264,8 +312,20 @@ export function usePedalSession() {
           pocketStateRef.current,
         );
         if (next !== pocketStateRef.current) {
+          const previous = pocketStateRef.current;
           pocketStateRef.current = next;
           setPocketPercent(next.percent);
+          let message: string = TEXT.status.pocket.unchanged;
+          if (next.percent === null) message = TEXT.status.pocket.needNotes;
+          else if (previous.percent === null) message = TEXT.status.pocket.firstReading;
+          else if (next.percent > previous.percent) message = TEXT.status.pocket.up;
+          else if (next.percent < previous.percent) message = TEXT.status.pocket.down;
+          else if (
+            scorePocketWindow(pocketEventsRef.current, next.completedWindow, bpmRef.current) ===
+            null
+          )
+            message = TEXT.status.pocket.holding;
+          setPocketMessage(message);
         }
       }, 100);
     } catch (error) {
@@ -275,12 +335,12 @@ export function usePedalSession() {
       setStatus({
         text:
           name === 'NotAllowedError'
-            ? 'Mic access required · allow microphone'
+            ? TEXT.error.microphoneAccessRequired
             : name === 'NotFoundError'
-              ? 'No audio input found'
+              ? TEXT.error.noAudioInput
               : error instanceof Error
                 ? error.message
-                : 'Audio could not start',
+                : TEXT.error.audioCouldNotStart,
         tone: 'warning',
       });
     }
@@ -289,14 +349,15 @@ export function usePedalSession() {
   const beginCalibration = async () => {
     if (modeRef.current === 'connecting' || modeRef.current === 'calibrating') return;
     preview.stop();
-    if (modeRef.current === 'running') stopPractice('Ready');
+    if (modeRef.current === 'running') stopPractice(TEXT.status.ready);
     setMode('calibrating');
     setModal('calibration');
-    setStatus({ text: 'Ready', tone: 'ready' });
+    setStatus({ text: TEXT.status.ready, tone: 'ready' });
     samplesRef.current = [];
+    setDebugEntries([]);
     setSamples([]);
     lastSlot.current = Number.NEGATIVE_INFINITY;
-    setHint('Connecting input…');
+    setHint(TEXT.signal.connecting);
     const currentRequest = ++request.current;
     try {
       await audio.start(
@@ -318,10 +379,10 @@ export function usePedalSession() {
         ...emptySignal,
         label:
           name === 'NotAllowedError'
-            ? 'Microphone access needed'
+            ? TEXT.signal.microphoneAccessNeeded
             : name === 'NotFoundError'
-              ? 'No audio input found'
-              : 'Input unavailable',
+              ? TEXT.error.noAudioInput
+              : TEXT.signal.inputUnavailable,
       });
     }
   };
@@ -332,7 +393,7 @@ export function usePedalSession() {
     setCalibration(cleared);
     audio.setCalibration(0);
     setStatus({
-      text: 'Calibration cleared',
+      text: TEXT.status.calibrationCleared,
       tone: modeRef.current === 'running' ? 'running' : 'ready',
     });
   };
@@ -351,16 +412,18 @@ export function usePedalSession() {
   }, [audio, refreshDevices]);
 
   const getBeatPosition = useCallback(() => audio.getBeatPosition(), [audio]);
+  const getSessionElapsed = useCallback(() => audio.getSessionElapsed(), [audio]);
   const deviceName = deviceId
-    ? devices.find((device) => device.deviceId === deviceId)?.label || 'System default input'
-    : 'System default input';
+    ? devices.find((device) => device.deviceId === deviceId)?.label || TEXT.device.defaultInput
+    : TEXT.device.defaultInput;
   return {
     bpm,
     gain,
     meter,
     mode,
     modal,
-    status,
+    status:
+      mode === 'running' && status.tone !== 'warning' ? { ...status, text: pocketMessage } : status,
     events,
     latest,
     pocketPercent,
@@ -373,6 +436,8 @@ export function usePedalSession() {
     hint,
     signal: modal === 'input' && mode !== 'running' ? preview.signal : practiceSignal,
     getBeatPosition,
+    getSessionElapsed,
+    debugEntries,
     changeBpm,
     changeGain,
     changeMeter,

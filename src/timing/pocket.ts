@@ -7,31 +7,42 @@ export interface PocketState {
 
 export const initialPocketState: PocketState = { completedWindow: -1, percent: null };
 
-// Each assessment covers two complete measures. A few isolated hits are not enough
-// to describe a player's pocket, so require notes in at least 75% of grid slots.
+// Rests are free. Wait for enough distinct attacks before reporting a window.
 export const POCKET_MEASURES = 2;
-export const POCKET_TOLERANCE_MS = 20;
-export const POCKET_MIN_COVERAGE = 0.75;
+export const POCKET_MIN_NOTES = 6;
 export const POCKET_SETTLE_MS = 200;
+
+export function scorePocketOffset(offsetMs: number, bpm: number): number {
+  const sixteenthMs = 15_000 / bpm;
+  const fullCreditMs = Math.min(20, Math.max(10, sixteenthMs * 0.12));
+  const zeroCreditMs = Math.min(80, Math.max(35, sixteenthMs * 0.45));
+  const error = Math.abs(offsetMs);
+  if (error <= fullCreditMs) return 100;
+  if (error >= zeroCreditMs) return 0;
+  return (100 * (zeroCreditMs - error)) / (zeroCreditMs - fullCreditMs);
+}
 
 export function scorePocketWindow(
   events: readonly TimingEvent[],
   windowIndex: number,
-  meter: Meter,
+  bpm: number,
 ): number | null {
   const firstMeasure = windowIndex * POCKET_MEASURES;
   const hits = new Map<number, TimingEvent>();
   for (const event of events) {
-    if (event.measureIndex >= firstMeasure && event.measureIndex < firstMeasure + POCKET_MEASURES)
-      hits.set(event.expectedTimestamp, event);
+    if (
+      event.subdivisionMeasureIndex >= firstMeasure &&
+      event.subdivisionMeasureIndex < firstMeasure + POCKET_MEASURES
+    ) {
+      hits.set(event.subdivisionIndex, event);
+    }
   }
-  const expectedSlots = meter * POCKET_MEASURES;
-  if (hits.size < Math.ceil(expectedSlots * POCKET_MIN_COVERAGE)) return null;
+  if (hits.size < POCKET_MIN_NOTES) return null;
   return Math.round(
-    (100 *
-      [...hits.values()].filter((event) => Math.abs(event.correctedOffsetMs) <= POCKET_TOLERANCE_MS)
-        .length) /
-      hits.size,
+    [...hits.values()].reduce(
+      (sum, event) => sum + scorePocketOffset(event.subdivisionOffsetMs, bpm),
+      0,
+    ) / hits.size,
   );
 }
 
@@ -50,7 +61,7 @@ export function advancePocketState(
 
   let percent = previous.percent;
   for (let window = previous.completedWindow + 1; window <= newestCompletedWindow; window++) {
-    const score = scorePocketWindow(events, window, meter);
+    const score = scorePocketWindow(events, window, bpm);
     if (score !== null) percent = score;
   }
   return { completedWindow: newestCompletedWindow, percent };

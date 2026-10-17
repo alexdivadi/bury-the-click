@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { TEXT } from '../text.ts';
 
 export function Manual({
   title,
@@ -62,7 +63,7 @@ export function Manual({
         <button
           ref={closeButton}
           className="close-button"
-          aria-label={`Close ${title}`}
+          aria-label={TEXT.hardware.closeManual(title)}
           onClick={onClose}
         >
           ×

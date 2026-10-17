@@ -10,9 +10,13 @@ A browser-based timing pedal. It plays a click, listens to your instrument throu
 2. Press **Input** and allow microphone access. Choose the audio source with the arrow buttons. Play a few notes to check the live input meter; if it reports clipping, lower the level on your interface.
 3. Set **Tempo** and **Input Gain** by dragging each dial horizontally. Gain changes how readily a note is detected. Double-click a dial to reset it to 80 BPM or 55%.
 4. Set **Time Signature** to 3/4, 4/4, or 5/4. Tap the lever to cycle states or drag it sideways. Each click is a quarter-note beat; the first beat of each measure has a higher accent.
-5. Press **Start / Stop** to begin or end a session. Play one note per click. The display shows each note's offset in milliseconds, a position on the early-to-late line, and average error. **IN POCKET %** updates after each complete two-measure block with consistent playing; sparse blocks leave the previous score in place.
+5. Press **Start / Stop** to begin or end a session. Play on the beat or its sixteenth-note subdivisions. The main offset, early/late label, and timing marker position update on quarter-note beats; the timeline briefly flashes for every accepted note. **BIAS MS** shows the signed average offset, so a steady early or late tendency stays visible. **IN POCKET %** grades played notes against the sixteenth-note grid after each complete two-measure block. Rests do not lower the score; blocks with fewer than six distinct notes leave the previous score in place.
 
 For a more accurate reading, open **Input** and choose **Calibrate with 8 notes**. Play one note on each click until all eight are heard. The pedal measures input delay and saves the adjustment for that audio source. **Clear** removes it.
+
+For input troubleshooting, open **Input trace** at the bottom left. Drag its header to move it. Each attack shows its nearest sixteenth target (`1`, `1e`, `1&`, `1a`, then `2`), raw offset from the nearest click, and raw and calibrated offset from the sixteenth target. Repeated attacks on one subdivision appear as **duplicate**. The pedal requests browser echo cancellation and identifies its own click tone in the input; rejected clicks appear as **click bleed**. Headphones give the cleanest input.
+
+The input trace is hidden by default. To enable it during local development, put `VITE_DEBUG_MENU=true` in `.env.local` and restart the dev server. The trace is always hidden in production builds.
 
 ## Run locally
 

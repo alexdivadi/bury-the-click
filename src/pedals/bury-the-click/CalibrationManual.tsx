@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Manual } from '../../hardware/Manual.tsx';
+import { TEXT } from '../../text.ts';
 
 function CalibrationBeat({
   bpm,
@@ -26,7 +27,7 @@ function CalibrationBeat({
   }, [bpm, getBeatPosition]);
   return (
     <div className="cal-beat" ref={face}>
-      <small>Click</small>
+      <small>{TEXT.calibration.click}</small>
       <strong ref={number}>1</strong>
     </div>
   );
@@ -48,22 +49,23 @@ export function CalibrationManual({
   onCancel: () => void;
 }) {
   return (
-    <Manual title="Calibrate" className="calibration-card" onClose={onCancel}>
-      <h2>Calibrate</h2>
+    <Manual title={TEXT.calibration.title} className="calibration-card" onClose={onCancel}>
+      <h2>{TEXT.calibration.title}</h2>
       <p className="overlay-copy">
-        Play one note per click at <strong>{bpm} bpm</strong>.
+        {TEXT.calibration.instructionBeforeTempo} <strong>{TEXT.calibration.tempo(bpm)}</strong>
+        {TEXT.calibration.instructionAfterTempo}
       </p>
       <div className="calibration-face">
         <CalibrationBeat bpm={bpm} getBeatPosition={getBeatPosition} />
         <div className="cal-count">
           <strong>{heard}</strong>
-          <span>of 8 notes heard</span>
+          <span>{TEXT.calibration.notesHeard}</span>
         </div>
       </div>
       <div
         className="cal-progress"
         role="progressbar"
-        aria-label="Calibration progress"
+        aria-label={TEXT.calibration.progress}
         aria-valuemin={0}
         aria-valuemax={8}
         aria-valuenow={heard}
@@ -73,7 +75,7 @@ export function CalibrationManual({
         ))}
       </div>
       <div className="cal-monitor">
-        <span>Input</span>
+        <span>{TEXT.calibration.input}</span>
         <div className="cal-monitor-track">
           <i style={{ width: `${signalPercent}%` }} />
         </div>

@@ -9,6 +9,7 @@
 @import './hardware/Manual.css';
 @import './pedals/bury-the-click/InputManual.css';
 @import './pedals/bury-the-click/CalibrationManual.css';
+@import './pedals/bury-the-click/DebugOverlay.css';
 @import './pedals/bury-the-click/pedal.css';
 
 @font-face {

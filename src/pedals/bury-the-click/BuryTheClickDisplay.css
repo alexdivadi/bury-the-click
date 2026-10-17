@@ -97,6 +97,28 @@
   height: 10px;
   background: linear-gradient(90deg, transparent, #394e7029 38%, #394e7029 62%, transparent);
 }
+.meter-input-flash {
+  position: absolute;
+  top: 7px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: #34415d;
+  pointer-events: none;
+  opacity: 0;
+  animation: input-flash 130ms ease-out;
+}
+@keyframes input-flash {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.32;
+  }
+  100% {
+    opacity: 0;
+  }
+}
 .meter-needle {
   position: absolute;
   z-index: 1;

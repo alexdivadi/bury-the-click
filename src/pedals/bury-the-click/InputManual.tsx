@@ -1,4 +1,5 @@
 import { Manual } from '../../hardware/Manual.tsx';
+import { TEXT } from '../../text.ts';
 import type { SignalLevel } from './useInputPreview.ts';
 
 export function InputManual({
@@ -25,20 +26,20 @@ export function InputManual({
   onClear: () => void;
 }) {
   return (
-    <Manual title="Input" className="input-card" onClose={onClose}>
+    <Manual title={TEXT.input.title} className="input-card" onClose={onClose}>
       <div className="manual-intro">
-        <h2>Input</h2>
-        <p className="overlay-copy">Use headphones to keep the click out of the mic.</p>
+        <h2>{TEXT.input.title}</h2>
+        <p className="overlay-copy">{TEXT.input.headphones}</p>
       </div>
       <section className="manual-section">
         <div className="field-heading">
-          <span>Audio source</span>
+          <span>{TEXT.input.audioSource}</span>
           <span>{deviceNote}</span>
         </div>
         <div className="device-picker">
           <button
             type="button"
-            aria-label="Previous audio source"
+            aria-label={TEXT.input.previousSource}
             disabled={!deviceCount}
             onClick={() => onDevice(-1)}
           >
@@ -47,7 +48,7 @@ export function InputManual({
           <span className="device-name">{deviceName}</span>
           <button
             type="button"
-            aria-label="Next audio source"
+            aria-label={TEXT.input.nextSource}
             disabled={!deviceCount}
             onClick={() => onDevice(1)}
           >
@@ -57,13 +58,13 @@ export function InputManual({
       </section>
       <section className="manual-section signal-section">
         <div className="signal-heading">
-          <span>Input level</span>
+          <span>{TEXT.input.inputLevel}</span>
           <span>{signal.label}</span>
         </div>
         <div
           className={`signal-meter ${signal.clipping ? 'clipping' : ''}`}
           role="progressbar"
-          aria-label="Input level"
+          aria-label={TEXT.input.inputLevel}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={signal.percent}
@@ -74,17 +75,17 @@ export function InputManual({
       </section>
       <section className="manual-section calibration-block">
         <div className="calibration-heading">
-          <h3>Timing adjustment</h3>
+          <h3>{TEXT.input.timingAdjustment}</h3>
           <span className="calibration-value">
-            {calibration.saved ? `${Math.round(calibration.value)} ms` : 'Not set'}
+            {calibration.saved ? TEXT.input.calibrationValue(calibration.value) : TEXT.input.notSet}
           </span>
         </div>
         <div className="cal-actions">
           <button type="button" className="calibrate-button" disabled={busy} onClick={onCalibrate}>
-            Calibrate with 8 notes
+            {TEXT.input.calibrate}
           </button>
           <button type="button" className="text-button" onClick={onClear}>
-            Clear
+            {TEXT.input.clear}
           </button>
         </div>
       </section>

@@ -1,4 +1,5 @@
 import { beatPosition, TimingGrid, type Meter, type TimingEvent } from '../timing/grid.ts';
+import { TEXT } from '../text.ts';
 export interface AudioCallbacks {
   onTiming: (event: TimingEvent) => void;
   onSignal: (level: number, clipping: boolean) => void;
@@ -16,6 +17,7 @@ export class WebAudioEngine {
   private nextClick = 0;
   private clickIndex = 0;
   private grid: TimingGrid | null = null;
+  private sessionStartTime: number | null = null;
   private bpm = 80;
   private meter: Meter = 4;
   private calibrationOffsetMs = 0;
@@ -34,6 +36,9 @@ export class WebAudioEngine {
       ? beatPosition(this.grid.anchor, this.bpm, this.context.currentTime, this.meter)
       : null;
   }
+  getSessionElapsed(timestamp = this.context?.currentTime ?? 0): number {
+    return this.sessionStartTime === null ? 0 : Math.max(0, timestamp - this.sessionStartTime);
+  }
 
   async start(
     deviceId: string,
@@ -46,31 +51,29 @@ export class WebAudioEngine {
     this.stop();
     const generation = this.startGeneration;
     if (!navigator.mediaDevices?.getUserMedia || !window.AudioWorkletNode)
-      throw new Error(
-        'This browser cannot process live audio. Use a current browser over HTTPS or localhost.',
-      );
+      throw new Error(TEXT.error.unsupportedBrowser);
     const context = new AudioContext({ latencyHint: 'interactive' });
     this.context = context;
     try {
       await context.resume(); // Request playback while the Start tap still has user activation.
       if (generation !== this.startGeneration)
-        throw new DOMException('Audio start cancelled', 'AbortError');
+        throw new DOMException(TEXT.error.audioStartCancelled, 'AbortError');
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
-          echoCancellation: false,
+          echoCancellation: true,
           noiseSuppression: false,
           autoGainControl: false,
         },
       });
       if (generation !== this.startGeneration) {
         stream.getTracks().forEach((track) => track.stop());
-        throw new DOMException('Audio start cancelled', 'AbortError');
+        throw new DOMException(TEXT.error.audioStartCancelled, 'AbortError');
       }
       this.stream = stream;
       await context.audioWorklet.addModule('/onset-worklet.js');
       if (generation !== this.startGeneration)
-        throw new DOMException('Audio start cancelled', 'AbortError');
+        throw new DOMException(TEXT.error.audioStartCancelled, 'AbortError');
       this.source = context.createMediaStreamSource(this.stream);
       this.detector = new AudioWorkletNode(context, 'note-onset');
       this.detector.port.postMessage({ type: 'sensitivity', value: sensitivity });
@@ -83,21 +86,19 @@ export class WebAudioEngine {
             message.data.amplitude,
             message.data.confidence,
           );
-          if (event) this.callbacks.onTiming(event);
+          if (event) this.callbacks.onTiming({ ...event, clickBleed: message.data.clickBleed });
         }
       };
       this.source.connect(this.detector);
       this.detector.connect(context.destination); // The worklet emits silence, but must remain in the rendering graph.
       this.stream
         .getAudioTracks()[0]
-        .addEventListener(
-          'ended',
-          () => this.callbacks.onError('Input disconnected. Select an input and start again.'),
-          { once: true },
-        );
+        .addEventListener('ended', () => this.callbacks.onError(TEXT.error.inputDisconnected), {
+          once: true,
+        });
       context.onstatechange = () => {
         if (context.state === 'suspended' && this.running)
-          this.callbacks.onError('Audio paused by the browser. Tap the switch to restart.');
+          this.callbacks.onError(TEXT.error.audioPaused);
       };
       this.bpm = bpm;
       this.meter = meter;
@@ -131,6 +132,7 @@ export class WebAudioEngine {
   private reanchor(): void {
     if (!this.context) return;
     this.nextClick = this.context.currentTime + 0.12;
+    this.sessionStartTime ??= this.nextClick;
     this.clickIndex = 0;
     this.grid = new TimingGrid(this.nextClick, this.bpm, this.meter, this.calibrationOffsetMs);
   }
@@ -149,17 +151,30 @@ export class WebAudioEngine {
   private playClick(time: number, accent: boolean): void {
     const context = this.context;
     if (!context) return;
+    this.detector?.port.postMessage({ type: 'click', time });
     const oscillator = context.createOscillator();
     const gain = context.createGain();
     oscillator.type = 'sine';
     oscillator.frequency.setValueAtTime(accent ? 1150 : 850, time);
     oscillator.frequency.exponentialRampToValueAtTime(accent ? 700 : 540, time + 0.035);
     gain.gain.setValueAtTime(0.0001, time);
-    gain.gain.exponentialRampToValueAtTime(accent ? 0.22 : 0.14, time + 0.002);
+    gain.gain.exponentialRampToValueAtTime(accent ? 0.075 : 0.055, time + 0.002);
     gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.06);
     oscillator.connect(gain).connect(context.destination);
     oscillator.start(time);
     oscillator.stop(time + 0.065);
+    for (const frequency of [3000, 3750]) {
+      const tag = context.createOscillator();
+      const tagGain = context.createGain();
+      tag.type = 'sine';
+      tag.frequency.setValueAtTime(frequency, time);
+      tagGain.gain.setValueAtTime(0.0001, time);
+      tagGain.gain.exponentialRampToValueAtTime(accent ? 0.09 : 0.07, time + 0.002);
+      tagGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.035);
+      tag.connect(tagGain).connect(context.destination);
+      tag.start(time);
+      tag.stop(time + 0.04);
+    }
   }
 
   private startHum(context: AudioContext): void {
@@ -189,6 +204,7 @@ export class WebAudioEngine {
     if (this.scheduler !== null) window.clearInterval(this.scheduler);
     this.scheduler = null;
     this.grid = null;
+    this.sessionStartTime = null;
     if (this.context) this.humGain?.gain.setValueAtTime(0, this.context.currentTime);
     this.humOscillators.forEach((oscillator) => {
       oscillator.stop();

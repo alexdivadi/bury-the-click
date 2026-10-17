@@ -1,9 +1,9 @@
 import type { TimingEvent } from './grid.ts';
 
-export function averageAbsoluteError(events: TimingEvent[]): number {
+export function averageOffset(events: TimingEvent[]): number {
   if (!events.length) return 0;
   return Math.round(
-    events.reduce((sum, event) => sum + Math.abs(event.correctedOffsetMs), 0) / events.length,
+    events.reduce((sum, event) => sum + event.subdivisionOffsetMs, 0) / events.length,
   );
 }
 

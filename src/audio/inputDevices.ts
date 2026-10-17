@@ -1,3 +1,5 @@
+import { TEXT } from '../text.ts';
+
 export interface InputDevice {
   deviceId: string;
   label: string;
@@ -19,6 +21,6 @@ export async function listInputs(): Promise<InputDevice[]> {
     .filter((device) => device.kind === 'audioinput')
     .map((device, index) => ({
       deviceId: device.deviceId,
-      label: device.label || `Audio input ${index + 1}`,
+      label: device.label || TEXT.device.audioInput(index + 1),
     }));
 }

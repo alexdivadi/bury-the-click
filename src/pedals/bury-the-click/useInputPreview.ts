@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { TEXT } from '../../text.ts';
 
 export interface SignalLevel {
   percent: number;
@@ -14,7 +15,11 @@ export function signalLevel(level: number, clipping: boolean): SignalLevel {
   return {
     percent,
     clipping,
-    label: clipping ? 'Clipping — lower gain' : level < 0.001 ? 'Very quiet' : 'Signal present',
+    label: clipping
+      ? TEXT.signal.clipping
+      : level < 0.001
+        ? TEXT.signal.quiet
+        : TEXT.signal.present,
   };
 }
 
@@ -39,9 +44,9 @@ export function useInputPreview() {
   const start = async (deviceId: string, onConnected?: () => void) => {
     stop();
     const request = generation.current;
-    setSignal({ ...emptySignal, label: 'Connecting input…' });
+    setSignal({ ...emptySignal, label: TEXT.signal.connecting });
     if (!navigator.mediaDevices?.getUserMedia) {
-      setSignal({ ...emptySignal, label: 'Microphone unavailable' });
+      setSignal({ ...emptySignal, label: TEXT.signal.microphoneUnavailable });
       return;
     }
     const audioContext = new AudioContext({ latencyHint: 'interactive' });
@@ -84,8 +89,8 @@ export function useInputPreview() {
         ...emptySignal,
         label:
           error instanceof DOMException && error.name === 'NotAllowedError'
-            ? 'Microphone access needed'
-            : 'Input unavailable',
+            ? TEXT.signal.microphoneAccessNeeded
+            : TEXT.signal.inputUnavailable,
       });
     }
   };
