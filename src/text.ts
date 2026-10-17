@@ -126,7 +126,7 @@ export const TEXT = {
       unchanged: 'Keep it up',
       needNotes: 'Listening',
       firstReading: 'Calculating',
-      up: 'Groovin\'',
+      up: "Groovin'",
       down: 'Stay in the pocket',
       holding: 'Final score',
     },

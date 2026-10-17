@@ -1,6 +1,7 @@
 import { act, render, renderHook } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { BuryTheClickDisplay } from '../../src/pedals/bury-the-click/BuryTheClickDisplay.tsx';
+import { DEBUG_MENU_ENABLED } from '../../src/debug.ts';
 import { usePedalSession } from '../../src/pedals/bury-the-click/usePedalSession.ts';
 import { TimingGrid, type TimingEvent } from '../../src/timing/grid.ts';
 import { TEXT } from '../../src/text.ts';
@@ -15,12 +16,12 @@ vi.mock('../../src/audio/WebAudioEngine.ts', () => ({
     constructor(callbacks: { onTiming: (event: TimingEvent) => void }) {
       engine.emitTiming = callbacks.onTiming;
     }
-    async start() { }
-    stop() { }
-    setTempo() { }
-    setMeter() { }
-    setSensitivity() { }
-    setCalibration() { }
+    async start() {}
+    stop() {}
+    setTempo() {}
+    setMeter() {}
+    setSensitivity() {}
+    setCalibration() {}
     getSessionElapsed() {
       return 0;
     }
@@ -51,7 +52,7 @@ it('keeps sixteenth hits for scoring without moving the quarter-note display', a
   expect(result.current.events).toHaveLength(3);
   expect(result.current.latest?.timestamp).toBe(beat.timestamp);
   expect(result.current.status.text).toBe(TEXT.status.pocket.collecting);
-  expect(result.current.debugEntries).toHaveLength(0);
+  expect(result.current.debugEntries).toHaveLength(DEBUG_MENU_ENABLED ? 3 : 0);
   unmount();
 });
 
@@ -120,8 +121,8 @@ it('waits before scrolling an overflowing LCD message', () => {
   vi.stubGlobal(
     'ResizeObserver',
     class {
-      observe() { }
-      disconnect() { }
+      observe() {}
+      disconnect() {}
     },
   );
   vi.stubGlobal('matchMedia', () => ({ matches: false }));
@@ -154,5 +155,27 @@ it('waits before scrolling an overflowing LCD message', () => {
     width.mockRestore();
     scrollWidth.mockRestore();
     vi.unstubAllGlobals();
+  }
+});
+
+it('restores this pedal’s selected controls after remounting', () => {
+  const key = 'pedal:bury-the-click:settings:v1';
+  localStorage.removeItem(key);
+  try {
+    const first = renderHook(() => usePedalSession());
+    act(() => {
+      first.result.current.changeBpm(126);
+      first.result.current.changeGain(71);
+      first.result.current.changeMeter(5);
+    });
+    first.unmount();
+
+    const second = renderHook(() => usePedalSession());
+    expect(second.result.current.bpm).toBe(126);
+    expect(second.result.current.gain).toBe(71);
+    expect(second.result.current.meter).toBe(5);
+    second.unmount();
+  } finally {
+    localStorage.removeItem(key);
   }
 });

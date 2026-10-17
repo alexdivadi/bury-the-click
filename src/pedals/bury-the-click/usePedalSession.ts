@@ -9,6 +9,7 @@ import type { PocketState } from '../../timing/pocket.ts';
 import type { Meter, TimingEvent } from '../../timing/grid.ts';
 import { TEXT } from '../../text.ts';
 import { readCalibration, removeCalibration, writeCalibration } from './calibration.ts';
+import { readSettings, writeSettings } from './settings.ts';
 import type { DebugEntry } from './DebugOverlay.tsx';
 import { emptySignal, signalLevel, useInputPreview } from './useInputPreview.ts';
 
@@ -17,9 +18,10 @@ type Modal = 'input' | 'calibration' | null;
 type Status = { text: string; tone: 'ready' | 'running' | 'warning' };
 
 export function usePedalSession() {
-  const [bpm, setBpm] = useState(80);
-  const [gain, setGain] = useState(55);
-  const [meter, setMeter] = useState<Meter>(4);
+  const [savedSettings] = useState(readSettings);
+  const [bpm, setBpm] = useState(savedSettings.bpm);
+  const [gain, setGain] = useState(savedSettings.gain);
+  const [meter, setMeter] = useState<Meter>(savedSettings.meter);
   const [mode, setModeState] = useState<Mode>('idle');
   const [modal, setModalState] = useState<Modal>(null);
   const [status, setStatus] = useState<Status>({ text: TEXT.status.ready, tone: 'ready' });
@@ -28,9 +30,9 @@ export function usePedalSession() {
   const [pocketPercent, setPocketPercent] = useState<number | null>(null);
   const [pocketMessage, setPocketMessage] = useState<string>(TEXT.status.pocket.collecting);
   const [devices, setDevices] = useState<InputDevice[]>([]);
-  const [deviceId, setDeviceId] = useState('');
+  const [deviceId, setDeviceId] = useState(savedSettings.deviceId);
   const [deviceNote, setDeviceNote] = useState('');
-  const [calibration, setCalibration] = useState(() => readCalibration(''));
+  const [calibration, setCalibration] = useState(() => readCalibration(savedSettings.deviceId));
   const [samples, setSamples] = useState<number[]>([]);
   const [hint, setHint] = useState('');
   const [practiceSignal, setPracticeSignal] = useState(emptySignal);
@@ -39,12 +41,12 @@ export function usePedalSession() {
 
   const modeRef = useRef<Mode>('idle');
   const modalRef = useRef<Modal>(null);
-  const deviceRef = useRef('');
+  const deviceRef = useRef(savedSettings.deviceId);
   const eventsRef = useRef<TimingEvent[]>([]);
   const pocketEventsRef = useRef<TimingEvent[]>([]);
   const pocketStateRef = useRef<PocketState>(initialPocketState);
-  const bpmRef = useRef(80);
-  const meterRef = useRef<Meter>(4);
+  const bpmRef = useRef(savedSettings.bpm);
+  const meterRef = useRef<Meter>(savedSettings.meter);
   const samplesRef = useRef<number[]>([]);
   const lastSlot = useRef(Number.NEGATIVE_INFINITY);
   const lastAudible = useRef(0);
@@ -56,9 +58,9 @@ export function usePedalSession() {
     signal: (level: number, clipping: boolean) => void;
     error: (message: string) => void;
   }>({
-    timing: () => { },
-    signal: () => { },
-    error: () => { },
+    timing: () => {},
+    signal: () => {},
+    error: () => {},
   });
   const [audio] = useState(
     () =>
@@ -98,7 +100,11 @@ export function usePedalSession() {
         (input) => input.deviceId && input.deviceId !== 'default',
       );
       setDevices(inputs);
-      if (deviceRef.current && !inputs.some((input) => input.deviceId === deviceRef.current)) {
+      if (
+        deviceRef.current &&
+        inputs.length &&
+        !inputs.some((input) => input.deviceId === deviceRef.current)
+      ) {
         deviceRef.current = '';
         setDeviceId('');
         const saved = readCalibration('');
@@ -108,7 +114,7 @@ export function usePedalSession() {
       }
       const selectedName = deviceRef.current
         ? inputs.find((input) => input.deviceId === deviceRef.current)?.label ||
-        TEXT.device.defaultInput
+          TEXT.device.defaultInput
         : TEXT.device.defaultInput;
       setDeviceNote(
         /bluetooth|airpods|wireless/i.test(selectedName)
@@ -232,7 +238,7 @@ export function usePedalSession() {
       else if (level > 0.001 && level < 0.3)
         setStatus((previous) =>
           previous.tone === 'warning' &&
-            (previous.text === TEXT.status.clipping || previous.text === TEXT.status.noInputSignal)
+          (previous.text === TEXT.status.clipping || previous.text === TEXT.status.noInputSignal)
             ? { text: TEXT.status.grooving, tone: 'running' }
             : previous,
         );
@@ -397,6 +403,10 @@ export function usePedalSession() {
       tone: modeRef.current === 'running' ? 'running' : 'ready',
     });
   };
+
+  useEffect(() => {
+    writeSettings({ bpm, gain, meter, deviceId });
+  }, [bpm, gain, meter, deviceId]);
 
   useEffect(() => {
     void refreshDevices();
