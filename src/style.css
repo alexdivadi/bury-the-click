@@ -268,6 +268,36 @@ h1 { margin: 0; color: var(--print); font-family: 'Brush Script MT', 'Snell Roun
 .input-card .calibrate-button:hover { background: #3c555c; }
 .input-card .text-button { min-width: 55px; background: #242929; color: #e2e5df; }
 
+.calibration-card {
+  padding: 27px;
+  border: 1px solid #5c6260;
+  border-radius: 0;
+  background:
+    linear-gradient(90deg, #171a1a 0%, #171a1aea 55%, #0e1112dc 100%),
+    url('/calibration-fretboard.png') right center / 52% auto no-repeat,
+    #0e1112;
+  box-shadow: 0 18px 40px #000c, inset 0 0 0 5px #0b0d0d, inset 0 0 0 6px #62676455;
+  color: #e8e7df;
+}
+.calibration-card .close-button { top: 21px; right: 25px; color: #e8e7df; }
+.calibration-card h2 { margin: 0 0 8px; font-family: 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif; font-size: 42px; font-weight: 800; line-height: 1; letter-spacing: -.06em; text-transform: uppercase; }
+.calibration-card .overlay-copy { margin: 0; color: #c3c4bf; }
+.calibration-card .calibration-face { gap: 21px; padding: 28px 0 24px; }
+.calibration-card .cal-beat { width: 78px; height: 78px; border: 1px solid #63777c; border-radius: 0; background: #101819; }
+.calibration-card .cal-beat small { color: #9baaaa; font-size: 10px; text-transform: uppercase; }
+.calibration-card .cal-beat strong { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 34px; font-weight: 600; }
+.calibration-card .cal-beat.pulse { border-color: #6cabc6; background: #344d59; color: #f2f4f2; }
+.calibration-card .cal-count strong { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 48px; font-weight: 600; }
+.calibration-card .cal-count span { color: #aab0ac; }
+.calibration-card .cal-progress { height: 7px; gap: 4px; }
+.calibration-card .cal-progress span { background: #293a3e; }
+.calibration-card .cal-progress span.heard { background: #6cabc6; }
+.calibration-card .cal-monitor { margin-top: 18px; color: #aab0ac; font-size: 11px; }
+.calibration-card .cal-monitor-track { height: 7px; background: #293a3e; }
+.calibration-card .cal-monitor-track i { background: #6cabc6; }
+.calibration-card .cal-hint { min-height: 18px; margin: 12px 0 0; color: #aab0ac; }
+.calibration-card .cal-hint:empty { visibility: hidden; }
+
 @media (max-width: 560px) {
   #app { padding: 7px 36px 7px 7px; align-items: start; }
   .pedal { width: 100%; min-height: calc(100dvh - 14px); padding: 22px 20px 16px; }

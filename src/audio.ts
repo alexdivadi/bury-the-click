@@ -34,6 +34,7 @@ export class WebAudioEngine {
   private bpm = 80;
   private subdivision: Subdivision = 1;
   private calibrationOffsetMs = 0;
+  private startGeneration = 0;
   private callbacks: AudioCallbacks;
 
   constructor(callbacks: AudioCallbacks) { this.callbacks = callbacks; }
@@ -43,20 +44,28 @@ export class WebAudioEngine {
     return this.context && this.grid ? beatPosition(this.grid.anchor, this.bpm, this.context.currentTime) : null;
   }
 
-  async start(deviceId: string, bpm: number, subdivision: Subdivision, sensitivity: number, calibrationOffsetMs: number): Promise<void> {
+  async start(deviceId: string, bpm: number, subdivision: Subdivision, sensitivity: number, calibrationOffsetMs: number, mode: 'practice' | 'calibration' = 'practice'): Promise<void> {
     this.stop();
+    const generation = this.startGeneration;
     if (!navigator.mediaDevices?.getUserMedia || !window.AudioWorkletNode) throw new Error('This browser cannot process live audio. Use a current browser over HTTPS or localhost.');
     const context = new AudioContext({ latencyHint: 'interactive' });
     this.context = context;
     try {
       await context.resume(); // Request playback while the Start tap still has user activation.
-      this.stream = await navigator.mediaDevices.getUserMedia({ audio: {
+      if (generation !== this.startGeneration) throw new DOMException('Audio start cancelled', 'AbortError');
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: {
         ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
         echoCancellation: false,
         noiseSuppression: false,
         autoGainControl: false,
       } });
+      if (generation !== this.startGeneration) {
+        stream.getTracks().forEach((track) => track.stop());
+        throw new DOMException('Audio start cancelled', 'AbortError');
+      }
+      this.stream = stream;
       await context.audioWorklet.addModule('/onset-worklet.js');
+      if (generation !== this.startGeneration) throw new DOMException('Audio start cancelled', 'AbortError');
       this.source = context.createMediaStreamSource(this.stream);
       this.detector = new AudioWorkletNode(context, 'bass-onset');
       this.detector.port.postMessage({ type: 'sensitivity', value: sensitivity });
@@ -77,11 +86,11 @@ export class WebAudioEngine {
       this.subdivision = subdivision;
       this.calibrationOffsetMs = calibrationOffsetMs;
       this.reanchor();
-      this.startHum(context);
+      if (mode === 'practice') this.startHum(context);
       this.scheduler = window.setInterval(() => this.scheduleClicks(), 25);
       this.scheduleClicks();
     } catch (error) {
-      this.stop();
+      if (generation === this.startGeneration) this.stop();
       throw error;
     }
   }
@@ -146,6 +155,7 @@ export class WebAudioEngine {
   }
 
   stop(): void {
+    this.startGeneration++;
     if (this.scheduler !== null) window.clearInterval(this.scheduler);
     this.scheduler = null;
     this.grid = null;

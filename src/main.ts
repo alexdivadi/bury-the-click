@@ -41,7 +41,7 @@ app.innerHTML = `
       <section class="manual-section signal-section"><div class="signal-heading"><span>Input level</span><span id="signal-label"></span></div><div class="signal-meter" id="signal-meter" role="progressbar" aria-label="Input level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="signal-fill"></span><i></i></div></section>
       <section class="manual-section calibration-block"><div class="calibration-heading"><h3>Timing adjustment</h3><span id="calibration-value">Not set</span></div><div class="cal-actions"><button type="button" id="calibrate-button" class="calibrate-button">Calibrate with 8 notes</button><button type="button" id="reset-calibration" class="text-button">Clear</button></div></section>
     </div></div>
-    <div class="overlay" id="calibration-overlay" hidden><div class="overlay-card calibration-card" role="dialog" aria-modal="true" aria-labelledby="cal-title"><button class="close-button" id="close-calibration" aria-label="Cancel calibration">×</button><h2 id="cal-title">Play on the click</h2><p class="overlay-copy">One note on each quarter-note click at <strong id="cal-bpm">80 bpm</strong>. Keep playing until all eight notes are heard.</p><div class="calibration-face"><div class="cal-beat" id="cal-beat"><small>Beat</small><strong id="cal-beat-number">1</strong></div><div class="cal-count"><strong id="cal-count">0</strong><span>of 8 notes heard</span></div></div><div class="cal-progress" id="cal-progress" role="progressbar" aria-label="Calibration progress" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="cal-monitor"><span>Input</span><div class="cal-monitor-track"><i id="cal-signal-fill"></i></div></div><p class="cal-hint">Listen to the click. Pluck when it sounds.</p></div></div>
+    <div class="overlay" id="calibration-overlay" hidden><div class="overlay-card calibration-card" role="dialog" aria-modal="true" aria-labelledby="cal-title"><button class="close-button" id="close-calibration" aria-label="Cancel calibration">×</button><h2 id="cal-title">Calibrate</h2><p class="overlay-copy">Play one note per click at <strong id="cal-bpm">80 bpm</strong>.</p><div class="calibration-face"><div class="cal-beat" id="cal-beat"><small>Click</small><strong id="cal-beat-number">1</strong></div><div class="cal-count"><strong id="cal-count">0</strong><span>of 8 notes heard</span></div></div><div class="cal-progress" id="cal-progress" role="progressbar" aria-label="Calibration progress" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="cal-monitor"><span>Input</span><div class="cal-monitor-track"><i id="cal-signal-fill"></i></div></div><p class="cal-hint" id="cal-hint"></p></div></div>
   </main>`;
 
 const element = <T extends HTMLElement>(selector: string) => app.querySelector<T>(selector)!;
@@ -53,6 +53,7 @@ let selectedDevice = '';
 let devices: InputDevice[] = [];
 let calibration = 0;
 let calibrating = false;
+let calibrationRequest = 0;
 let calibrationSamples: number[] = [];
 let events: TimingEvent[] = [];
 let lastSlot = Number.NEGATIVE_INFINITY;
@@ -237,8 +238,11 @@ function receiveTiming(event: TimingEvent): void {
 function updateSignal(level: number, clipping: boolean, preview = false): void {
   if (level > 0.0003) lastAudibleSignalAt = performance.now();
   const percent = Math.round(Math.max(0, Math.min(100, (20 * Math.log10(Math.max(level, 0.00001)) + 60) / 54 * 100)));
+  if (calibrating) {
+    element<HTMLElement>('#cal-signal-fill').style.width = `${percent}%`;
+    return;
+  }
   element<HTMLElement>('#signal-fill').style.width = `${percent}%`;
-  element<HTMLElement>('#cal-signal-fill').style.width = `${percent}%`;
   element<HTMLElement>('#signal-meter').setAttribute('aria-valuenow', String(percent));
   element<HTMLElement>('#signal-meter').classList.toggle('clipping', clipping);
   element<HTMLElement>('#signal-label').textContent = clipping ? 'Clipping — lower gain' : level < 0.001 ? 'Very quiet' : 'Signal present';
@@ -247,9 +251,14 @@ function updateSignal(level: number, clipping: boolean, preview = false): void {
 }
 
 function audioError(message: string): void {
+  if (calibrating) {
+    stopCalibration();
+    closeOverlay('#calibration-overlay');
+    openOverlay('#overlay');
+    setStatus(message, 'warning');
+    return;
+  }
   engine.stop();
-  calibrating = false;
-  element<HTMLElement>('#calibration-overlay').hidden = true;
   updateRunning(false);
   setStatus(message, 'warning');
 }
@@ -293,13 +302,19 @@ function renderBeat(): void {
     dot.classList.toggle('current', position?.beat === index + 1);
     dot.classList.toggle('pulse', position?.beat === index + 1 && pulse);
   });
-  element<HTMLElement>('#cal-beat-number').textContent = String(position?.beat ?? 1);
-  element<HTMLElement>('#cal-beat').classList.toggle('pulse', pulse);
   beatFrame = requestAnimationFrame(renderBeat);
 }
 
+function renderCalibrationBeat(): void {
+  if (!calibrating) return;
+  const position = engine.getBeatPosition();
+  element<HTMLElement>('#cal-beat-number').textContent = String(position?.beat ?? 1);
+  element<HTMLElement>('#cal-beat').classList.toggle('pulse', position !== null && position.phase < Math.min(0.35, bpm / 600));
+  beatFrame = requestAnimationFrame(renderCalibrationBeat);
+}
+
 async function togglePractice(): Promise<void> {
-  if (connecting) return;
+  if (connecting || calibrating) return;
   if (engine.running) {
     engine.stop();
     updateRunning(false);
@@ -392,32 +407,59 @@ function closeOverlay(id: string): void {
 }
 
 async function beginCalibration(): Promise<void> {
-  if (connecting) return;
-  if (!engine.running) { stopInputPreview(); await togglePractice(); }
-  if (!engine.running) { element<HTMLElement>('#signal-label').textContent = 'Check microphone access'; return; }
-  closeOverlay('#overlay');
-  if (subdivision !== 1) {
-    subdivision = 1;
-    engine.setSubdivision(1);
-    renderSubdivision();
-  }
+  if (connecting || calibrating) return;
+  connecting = true;
+  const request = ++calibrationRequest;
+  stopInputPreview();
+  if (engine.running) { engine.stop(); updateRunning(false); }
+  setStatus('Ready');
   calibrating = true;
+  closeOverlay('#overlay');
   calibrationSamples = [];
   lastSlot = Number.NEGATIVE_INFINITY;
   element<HTMLElement>('#cal-count').textContent = '0';
   element<HTMLElement>('#cal-progress').setAttribute('aria-valuenow', '0');
   element<HTMLElement>('#cal-bpm').textContent = `${bpm} bpm`;
+  element<HTMLElement>('#cal-hint').textContent = 'Connecting input…';
   element<HTMLElement>('#cal-progress').querySelectorAll('span').forEach((step) => step.classList.remove('heard'));
   openOverlay('#calibration-overlay');
+  try {
+    await engine.start(selectedDevice, bpm, 1, sensitivity, calibration, 'calibration');
+    if (request !== calibrationRequest || !calibrating) return;
+    element<HTMLElement>('#cal-hint').textContent = '';
+    beatFrame = requestAnimationFrame(renderCalibrationBeat);
+  } catch (error) {
+    if (request !== calibrationRequest) return;
+    stopCalibration();
+    closeOverlay('#calibration-overlay');
+    openOverlay('#overlay');
+    const name = error instanceof DOMException ? error.name : '';
+    element<HTMLElement>('#signal-label').textContent = name === 'NotAllowedError' ? 'Microphone access needed' : name === 'NotFoundError' ? 'No audio input found' : 'Input unavailable';
+  } finally { connecting = false; }
+}
+
+function stopCalibration(): void {
+  calibrationRequest++;
+  calibrating = false;
+  cancelAnimationFrame(beatFrame);
+  engine.stop();
+  element<HTMLElement>('#cal-beat').classList.remove('pulse');
+  element<HTMLElement>('#cal-signal-fill').style.width = '0%';
+}
+
+function cancelCalibration(): void {
+  stopCalibration();
+  closeOverlay('#calibration-overlay');
+  openOverlay('#overlay');
 }
 
 function finishCalibration(): void {
-  calibrating = false;
   const value = median(calibrationSamples);
+  stopCalibration();
   saveCalibration(value);
   closeOverlay('#calibration-overlay');
   openOverlay('#overlay');
-  setStatus(`Calibrated · ${Math.round(value)} ms offset`, 'running');
+  setStatus(`Calibrated · ${Math.round(value)} ms offset`);
 }
 
 function renderSubdivision(): void {
@@ -485,12 +527,15 @@ loadCalibration();
 element<HTMLButtonElement>('#footswitch').addEventListener('click', () => void togglePractice());
 element<HTMLButtonElement>('#input-button').addEventListener('click', () => { void refreshDevices(); openOverlay('#overlay'); });
 element<HTMLButtonElement>('#close-overlay').addEventListener('click', () => closeOverlay('#overlay'));
-element<HTMLButtonElement>('#close-calibration').addEventListener('click', () => { calibrating = false; closeOverlay('#calibration-overlay'); openOverlay('#overlay'); });
+element<HTMLButtonElement>('#close-calibration').addEventListener('click', cancelCalibration);
 element<HTMLButtonElement>('#calibrate-button').addEventListener('click', () => void beginCalibration());
 element<HTMLButtonElement>('#reset-calibration').addEventListener('click', () => { clearCalibration(); setStatus('Calibration cleared', engine.running ? 'running' : 'ready'); });
 element<HTMLButtonElement>('#device-prev').addEventListener('click', () => cycleDevice(-1));
 element<HTMLButtonElement>('#device-next').addEventListener('click', () => cycleDevice(1));
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape') { closeOverlay('#overlay'); calibrating = false; closeOverlay('#calibration-overlay'); }
+  if (event.key === 'Escape') {
+    if (calibrating) cancelCalibration();
+    else closeOverlay('#overlay');
+  }
 });
 navigator.mediaDevices?.addEventListener?.('devicechange', () => void refreshDevices());
