@@ -15,7 +15,7 @@ app.innerHTML = `
         <div class="timing-readout" id="timing-readout" aria-live="polite"><strong id="offset-value">--</strong><span id="offset-label">Waiting for a note</span></div>
         <div class="tempo-numeral"><span id="bpm-readout">80</span></div>
       </div>
-      <div class="meter-track" id="meter-track" aria-label="Timing position from early to late"><div class="meter-center"></div><div class="meter-ideal"></div><div class="meter-needle" id="meter-needle"></div></div>
+      <div class="meter-track" id="meter-track" aria-label="Timing position from early to late"><div class="meter-center"></div><div class="meter-ideal"></div><div class="meter-needle" id="meter-needle"></div><div class="beat-runner" id="beat-runner" aria-hidden="true"></div></div>
       <div class="display-activity"><div class="beat-strip" id="beat-strip" aria-label="Four beat click"><span></span><span></span><span></span><span></span></div><div class="history" id="history" aria-label="Recent notes"></div></div>
       <div class="display-footer"><span id="input-name">Default input</span><span id="status-text" role="status">Ready</span></div>
       <div class="display-stats"><strong id="average-error">--</strong><strong id="lock-value">--</strong><strong id="sens-value">55</strong><strong id="subdivision-value">1/4</strong></div>
@@ -54,6 +54,10 @@ let lastAudibleSignalAt = 0;
 let quietTimer: number | null = null;
 let connecting = false;
 let beatFrame = 0;
+let runnerStep = -1;
+const runner = element<HTMLElement>('#beat-runner');
+const runnerCells = Array.from({ length: 32 }, () => document.createElement('span'));
+runner.append(...runnerCells);
 
 function calibrationKey(): string { return `btc-calibration:${selectedDevice || 'default'}`; }
 function calibrationMarker(): string { return `btc-calibrated:${selectedDevice || 'default'}`; }
@@ -188,6 +192,7 @@ function updateRunning(running: boolean): void {
   if (running) beatFrame = requestAnimationFrame(renderBeat);
   if (!running) {
     cancelAnimationFrame(beatFrame);
+    renderRunner(null);
     element<HTMLElement>('#beat-strip').querySelectorAll('span').forEach((dot) => dot.classList.remove('current', 'pulse'));
     element<HTMLElement>('#signal-fill').style.width = '0%';
     element<HTMLElement>('#cal-signal-fill').style.width = '0%';
@@ -198,8 +203,20 @@ function updateRunning(running: boolean): void {
   }
 }
 
+function renderRunner(phase: number | null): void {
+  const step = phase === null ? -1 : Math.min(31, Math.floor(phase * runnerCells.length));
+  if (step === runnerStep) return;
+  runnerStep = step;
+  const trail = [0.85, 0.5, 0.28, 0.16, 0.1];
+  runnerCells.forEach((cell, index) => {
+    const distance = (step - index + runnerCells.length) % runnerCells.length;
+    cell.style.opacity = step < 0 ? '0' : String(trail[distance] ?? 0.08);
+  });
+}
+
 function renderBeat(): void {
   const position = engine.getBeatPosition();
+  renderRunner(position?.phase ?? null);
   const pulse = position !== null && position.phase < Math.min(0.35, bpm / 600);
   element<HTMLElement>('#beat-strip').querySelectorAll('span').forEach((dot, index) => {
     dot.classList.toggle('current', position?.beat === index + 1);

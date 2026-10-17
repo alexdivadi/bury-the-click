@@ -25,6 +25,8 @@ export class WebAudioEngine {
   private stream: MediaStream | null = null;
   private source: MediaStreamAudioSourceNode | null = null;
   private detector: AudioWorkletNode | null = null;
+  private humOscillators: OscillatorNode[] = [];
+  private humGain: GainNode | null = null;
   private scheduler: number | null = null;
   private nextClick = 0;
   private clickIndex = 0;
@@ -75,6 +77,7 @@ export class WebAudioEngine {
       this.subdivision = subdivision;
       this.calibrationOffsetMs = calibrationOffsetMs;
       this.reanchor();
+      this.startHum(context);
       this.scheduler = window.setInterval(() => this.scheduleClicks(), 25);
       this.scheduleClicks();
     } catch (error) {
@@ -124,10 +127,33 @@ export class WebAudioEngine {
     oscillator.stop(time + 0.065);
   }
 
+  private startHum(context: AudioContext): void {
+    const gain = context.createGain();
+    gain.gain.setValueAtTime(0, context.currentTime);
+    gain.gain.setTargetAtTime(0.0025, context.currentTime, 0.08);
+    gain.connect(context.destination);
+    this.humGain = gain;
+    for (const [frequency, level] of [[60, 1], [120, 0.28], [180, 0.08]]) {
+      const oscillator = context.createOscillator();
+      const partial = context.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency;
+      partial.gain.value = level;
+      oscillator.connect(partial).connect(gain);
+      oscillator.start();
+      this.humOscillators.push(oscillator);
+    }
+  }
+
   stop(): void {
     if (this.scheduler !== null) window.clearInterval(this.scheduler);
     this.scheduler = null;
     this.grid = null;
+    if (this.context) this.humGain?.gain.setValueAtTime(0, this.context.currentTime);
+    this.humOscillators.forEach((oscillator) => { oscillator.stop(); oscillator.disconnect(); });
+    this.humOscillators = [];
+    this.humGain?.disconnect();
+    this.humGain = null;
     this.detector?.disconnect();
     this.source?.disconnect();
     this.stream?.getTracks().forEach((track) => track.stop());
