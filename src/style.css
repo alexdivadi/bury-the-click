@@ -237,8 +237,9 @@ h1 { margin: 0; color: var(--print); font-family: 'Brush Script MT', 'Snell Roun
   border: 1px solid #5c6260;
   border-radius: 0;
   background:
-    linear-gradient(125deg, #ffffff08, transparent 32%),
-    linear-gradient(#171a1a, #0e1112);
+    linear-gradient(125deg, #171a1ad8, #0e1112e5),
+    url('/input-microphone.png') right top / 100% auto no-repeat,
+    #101314;
   box-shadow: 0 18px 40px #000c, inset 0 0 0 5px #0b0d0d, inset 0 0 0 6px #62676455;
   color: #e8e7df;
 }
@@ -253,7 +254,7 @@ h1 { margin: 0; color: var(--print); font-family: 'Brush Script MT', 'Snell Roun
 .input-card .device-picker button { min-height: 39px; border: 0; border-radius: 0; background: #252a2a; box-shadow: none; font-size: 24px; }
 .input-card .device-picker button:first-child { border-right: 1px solid #858d8b; }
 .input-card .device-picker button:last-child { border-left: 1px solid #858d8b; }
-.input-card #device-name { padding: 0 8px; color: #e4e8e3; font-family: Menlo, 'SFMono-Regular', monospace; font-size: 11px; }
+.input-card #device-name { padding: 0 8px; color: #e4e8e3; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 12px; }
 .input-card .signal-section, .input-card .calibration-block { margin-top: 0; }
 .input-card .signal-meter { height: 13px; margin-top: 12px; border-color: #848e8b; background: repeating-linear-gradient(90deg, #263432 0 calc(10% - 2px), #101516 calc(10% - 2px) 10%); }
 .input-card .signal-meter > span { background: #6cabc6; }
@@ -262,8 +263,9 @@ h1 { margin: 0; color: var(--print); font-family: 'Brush Script MT', 'Snell Roun
 .input-card .calibration-heading h3 { font-size: 12px; font-weight: 700; }
 .input-card .calibration-heading #calibration-value { padding: 4px 6px; border: 1px solid #4f5b59; background: #090d0f; color: #d9e1db; font-size: 10px; }
 .input-card .cal-actions { gap: 8px; margin-top: 12px; }
-.input-card .calibrate-button, .input-card .text-button { min-height: 38px; border-color: #7e8885; border-radius: 0; background: #e1e2dc; box-shadow: none; color: #141819; font-weight: 700; }
+.input-card .calibrate-button, .input-card .text-button { min-height: 38px; border-color: #63777c; border-radius: 0; background: #33484e; box-shadow: none; color: #e6e9e5; font-weight: 700; }
 .input-card .calibrate-button { padding: 0 12px; }
+.input-card .calibrate-button:hover { background: #3c555c; }
 .input-card .text-button { min-width: 55px; background: #242929; color: #e2e5df; }
 
 @media (max-width: 560px) {
