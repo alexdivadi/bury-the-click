@@ -38,7 +38,7 @@ app.innerHTML = `
       <button class="close-button" id="close-overlay" aria-label="Close">×</button>
       <div class="manual-intro"><h2 id="overlay-title">Input</h2><p class="overlay-copy">Use headphones to keep the click out of the mic.</p></div>
       <section class="manual-section"><div class="field-heading"><span>Audio source</span><span id="device-note"></span></div><div class="device-picker"><button type="button" id="device-prev" aria-label="Previous audio source">‹</button><span id="device-name">System default input</span><button type="button" id="device-next" aria-label="Next audio source">›</button></div></section>
-      <section class="manual-section signal-section"><div class="signal-heading"><span>Input level</span><span id="signal-label">Starts with the pedal</span></div><div class="signal-meter" id="signal-meter" role="progressbar" aria-label="Input level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="signal-fill"></span><i></i></div></section>
+      <section class="manual-section signal-section"><div class="signal-heading"><span>Input level</span><span id="signal-label"></span></div><div class="signal-meter" id="signal-meter" role="progressbar" aria-label="Input level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="signal-fill"></span><i></i></div></section>
       <section class="manual-section calibration-block"><div class="calibration-heading"><h3>Timing adjustment</h3><span id="calibration-value">Not set</span></div><div class="cal-actions"><button type="button" id="calibrate-button" class="calibrate-button">Calibrate with 8 notes</button><button type="button" id="reset-calibration" class="text-button">Clear</button></div></section>
     </div></div>
     <div class="overlay" id="calibration-overlay" hidden><div class="overlay-card calibration-card" role="dialog" aria-modal="true" aria-labelledby="cal-title"><button class="close-button" id="close-calibration" aria-label="Cancel calibration">×</button><h2 id="cal-title">Play on the click</h2><p class="overlay-copy">One note on each quarter-note click at <strong id="cal-bpm">80 bpm</strong>. Keep playing until all eight notes are heard.</p><div class="calibration-face"><div class="cal-beat" id="cal-beat"><small>Beat</small><strong id="cal-beat-number">1</strong></div><div class="cal-count"><strong id="cal-count">0</strong><span>of 8 notes heard</span></div></div><div class="cal-progress" id="cal-progress" role="progressbar" aria-label="Calibration progress" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="cal-monitor"><span>Input</span><div class="cal-monitor-track"><i id="cal-signal-fill"></i></div></div><p class="cal-hint">Listen to the click. Pluck when it sounds.</p></div></div>
@@ -59,6 +59,10 @@ let lastSlot = Number.NEGATIVE_INFINITY;
 let lastAudibleSignalAt = 0;
 let quietTimer: number | null = null;
 let connecting = false;
+let previewRequest = 0;
+let previewStream: MediaStream | null = null;
+let previewContext: AudioContext | null = null;
+let previewTimer: number | null = null;
 let beatFrame = 0;
 let runnerStep = -1;
 const runner = element<HTMLElement>('#beat-runner');
@@ -119,10 +123,65 @@ async function refreshDevices(): Promise<void> {
 
 function cycleDevice(direction: -1 | 1): void {
   if (!devices.length) return;
+  stopInputPreview();
   selectedDevice = cycleInputDevice(selectedDevice, devices, direction);
   loadCalibration();
   void refreshDevices();
   if (engine.running) { engine.stop(); updateRunning(false); setStatus('Input changed · tap to start'); }
+  if (!element<HTMLElement>('#overlay').hidden) void startInputPreview();
+}
+
+function stopInputPreview(): void {
+  previewRequest++;
+  if (previewTimer !== null) window.clearInterval(previewTimer);
+  previewTimer = null;
+  previewStream?.getTracks().forEach((track) => track.stop());
+  previewStream = null;
+  if (previewContext) void previewContext.close();
+  previewContext = null;
+}
+
+async function startInputPreview(): Promise<void> {
+  if (engine.running || element<HTMLElement>('#overlay').hidden) return;
+  stopInputPreview();
+  const request = previewRequest;
+  element<HTMLElement>('#signal-label').textContent = 'Connecting input…';
+  if (!navigator.mediaDevices?.getUserMedia) {
+    element<HTMLElement>('#signal-label').textContent = 'Microphone unavailable';
+    return;
+  }
+  const context = new AudioContext({ latencyHint: 'interactive' });
+  previewContext = context;
+  try {
+    await context.resume();
+    if (request !== previewRequest || element<HTMLElement>('#overlay').hidden) return;
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: {
+      ...(selectedDevice ? { deviceId: { exact: selectedDevice } } : {}),
+      echoCancellation: false, noiseSuppression: false, autoGainControl: false,
+    } });
+    if (request !== previewRequest || engine.running || element<HTMLElement>('#overlay').hidden) {
+      stream.getTracks().forEach((track) => track.stop());
+      return;
+    }
+    previewStream = stream;
+    const source = context.createMediaStreamSource(stream);
+    const analyser = context.createAnalyser();
+    analyser.fftSize = 1024;
+    source.connect(analyser);
+    const samples = new Float32Array(analyser.fftSize);
+    previewTimer = window.setInterval(() => {
+      analyser.getFloatTimeDomainData(samples);
+      let energy = 0;
+      let peak = 0;
+      for (const sample of samples) { energy += sample * sample; peak = Math.max(peak, Math.abs(sample)); }
+      updateSignal(Math.sqrt(energy / samples.length), peak > 0.98, true);
+    }, 80);
+    void refreshDevices();
+  } catch (error) {
+    if (request !== previewRequest) return;
+    stopInputPreview();
+    element<HTMLElement>('#signal-label').textContent = error instanceof DOMException && error.name === 'NotAllowedError' ? 'Microphone access needed' : 'Input unavailable';
+  }
 }
 
 function renderHistory(): void {
@@ -175,7 +234,7 @@ function receiveTiming(event: TimingEvent): void {
   setStatus(`Beat ${event.beat} · ${onTime ? 'In the pocket' : offset < 0 ? 'Ahead of the click' : 'Behind the click'}`, 'running');
 }
 
-function updateSignal(level: number, clipping: boolean): void {
+function updateSignal(level: number, clipping: boolean, preview = false): void {
   if (level > 0.0003) lastAudibleSignalAt = performance.now();
   const percent = Math.round(Math.max(0, Math.min(100, (20 * Math.log10(Math.max(level, 0.00001)) + 60) / 54 * 100)));
   element<HTMLElement>('#signal-fill').style.width = `${percent}%`;
@@ -183,8 +242,8 @@ function updateSignal(level: number, clipping: boolean): void {
   element<HTMLElement>('#signal-meter').setAttribute('aria-valuenow', String(percent));
   element<HTMLElement>('#signal-meter').classList.toggle('clipping', clipping);
   element<HTMLElement>('#signal-label').textContent = clipping ? 'Clipping — lower gain' : level < 0.001 ? 'Very quiet' : 'Signal present';
-  if (clipping) setStatus('Input clipping · lower your gain', 'warning');
-  if (level > 0.001 && level < 0.3 && !clipping && !events.length) setStatus('Listening · play with the click', 'running');
+  if (!preview && clipping) setStatus('Input clipping · lower your gain', 'warning');
+  if (!preview && level > 0.001 && level < 0.3 && !clipping && !events.length) setStatus('Listening · play with the click', 'running');
 }
 
 function audioError(message: string): void {
@@ -208,7 +267,7 @@ function updateRunning(running: boolean): void {
     element<HTMLElement>('#signal-fill').style.width = '0%';
     element<HTMLElement>('#cal-signal-fill').style.width = '0%';
     element<HTMLElement>('#signal-meter').setAttribute('aria-valuenow', '0');
-    element<HTMLElement>('#signal-label').textContent = 'Starts with the pedal';
+    element<HTMLElement>('#signal-label').textContent = '';
     if (quietTimer !== null) window.clearInterval(quietTimer);
     quietTimer = null;
   }
@@ -319,12 +378,22 @@ function installKnob(kind: 'tempo' | 'sens'): void {
   updateKnob(kind, current());
 }
 
-function openOverlay(id: string): void { element<HTMLElement>(id).hidden = false; }
-function closeOverlay(id: string): void { element<HTMLElement>(id).hidden = true; }
+function openOverlay(id: string): void { element<HTMLElement>(id).hidden = false; if (id === '#overlay') void startInputPreview(); }
+function closeOverlay(id: string): void {
+  element<HTMLElement>(id).hidden = true;
+  if (id === '#overlay') {
+    stopInputPreview();
+    if (!engine.running) {
+      element<HTMLElement>('#signal-fill').style.width = '0%';
+      element<HTMLElement>('#signal-meter').setAttribute('aria-valuenow', '0');
+      element<HTMLElement>('#signal-label').textContent = '';
+    }
+  }
+}
 
 async function beginCalibration(): Promise<void> {
   if (connecting) return;
-  if (!engine.running) await togglePractice();
+  if (!engine.running) { stopInputPreview(); await togglePractice(); }
   if (!engine.running) { element<HTMLElement>('#signal-label').textContent = 'Check microphone access'; return; }
   closeOverlay('#overlay');
   if (subdivision !== 1) {
