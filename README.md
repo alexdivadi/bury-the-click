@@ -1,24 +1,36 @@
 # Bury the Click
 
-A single-screen bass timing trainer. It listens to an audio input, plays a metronome, and shows each detected note's offset from the selected beat grid.
+A browser-based timing pedal. It plays a click, listens to your instrument through a microphone or audio interface, and shows how early or late each note lands.
 
-## Run
+![Black and white stencil diagram of the pedal and its controls](docs/pedal-controls.jpg)
+
+## Play
+
+1. Connect an instrument through an audio interface or use a microphone. Put on headphones so the click does not feed back into the input.
+2. Press **Input** and allow microphone access. Choose the audio source with the arrow buttons. Play a few notes to check the live input meter; if it reports clipping, lower the level on your interface.
+3. Set **Tempo** and **Input Gain** by dragging each dial horizontally. Gain changes how readily a note is detected. Double-click a dial to reset it to 80 BPM or 55%.
+4. Set **Note Grid** to quarter, eighth, or sixteenth notes. Tap the lever to cycle states or drag it sideways. The audible click stays on quarter notes.
+5. Press **Start / Stop** to begin or end a session. Play with the click. The display shows each note's offset in milliseconds, a position on the early-to-late line, average error, and the percentage of notes within the timing pocket.
+
+For a more accurate reading, open **Input** and choose **Calibrate with 8 notes**. Play one note on each click until all eight are heard. The pedal measures input delay and saves the adjustment for that audio source. **Clear** removes it.
+
+## Run locally
 
 ```sh
 npm install
 npm run dev
 ```
 
-Open the local URL shown by Vite. Live audio requires **HTTPS or localhost** and microphone permission. Use headphones when playing through a microphone so the click does not trigger the onset detector. For a USB interface, select its input through the pedal's **Input** jack.
+Open the URL printed by Vite. Audio input requires microphone permission and either localhost or HTTPS.
 
-## Controls
+To test the installable, offline-capable production build:
 
-- Drag the tempo or input gain knob left and right, or use arrow keys when focused. Double-click a knob to reset it (80 BPM or 55% gain).
-- Tap the Note Grid switch to cycle through quarter, eighth, and sixteenth notes, or drag it left and right to choose a position. Arrow keys also work when the switch is focused. The audible click stays on quarter notes while the timing grid follows the selected subdivision.
-- Tap the footswitch to start or stop. A quiet electrical hum plays under the click, and a stepped trail crosses the LCD once per beat. The pedal reports timing against the nearest grid position.
-- Press the **Input** jack to cycle through available audio sources with the arrow buttons, calibrate delay while the metronome is running, or reset the offset. Calibration is saved locally for each selected device.
+```sh
+npm run build
+npm run preview
+```
 
-The LCD uses [DSEG7 and DSEG14 Classic](https://github.com/keshikan/DSEG) by keshikan under the SIL Open Font License 1.1; the license is included in `public/fonts/DSEG-LICENSE.txt`.
+Open the preview URL, then use your browser's install command. The app shell works offline after its first load; live input still needs an available audio device.
 
 ## Verify
 
@@ -27,4 +39,4 @@ npm test
 npm run build
 ```
 
-The timing engine uses `AudioContext.currentTime` as its clock. Clicks are scheduled ahead on that clock, and the AudioWorklet timestamps attacks from `currentFrame`. The UI only displays the resulting events. The onset detector is intentionally energy based; actual bass recordings across instruments, interfaces, and rooms are still needed to validate its accuracy and tune its thresholds.
+Display fonts: [DSEG7 and DSEG14 Classic](https://github.com/keshikan/DSEG), licensed under SIL Open Font License 1.1. The license is in [`public/fonts/DSEG-LICENSE.txt`](public/fonts/DSEG-LICENSE.txt).

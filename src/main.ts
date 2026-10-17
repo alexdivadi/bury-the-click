@@ -1,10 +1,11 @@
+/// <reference types="vite/client" />
 import './style.css';
 import { cycleInputDevice, listInputs, WebAudioEngine, type InputDevice } from './audio.ts';
 import { median, sessionMetrics, type Subdivision, type TimingEvent } from './timing.ts';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = `
-  <main class="pedal" aria-label="Bury the Click bass timing trainer">
+  <main class="pedal" aria-label="Bury the Click timing trainer">
     <div class="screw screw-tl"></div><div class="screw screw-tr"></div>
     <div class="screw screw-bl"></div><div class="screw screw-br"></div>
     <div class="input-port"><span class="control-label">INPUT</span><button type="button" class="input-jack" id="input-button" aria-label="Input setup" title="Audio input and calibration"></button></div>
@@ -541,3 +542,9 @@ document.addEventListener('keydown', (event) => {
   }
 });
 navigator.mediaDevices?.addEventListener?.('devicechange', () => void refreshDevices());
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
