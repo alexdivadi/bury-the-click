@@ -114,7 +114,9 @@ h1 { margin: 0; color: var(--print); font-family: 'Brush Script MT', 'Snell Roun
 .meter-track::before { content: ''; position: absolute; top: 9px; left: 0; right: 0; height: 1px; background: #344461; }
 .meter-center { position: absolute; top: 1px; bottom: 1px; left: 50%; width: 1px; background: #344461; }
 .meter-ideal { position: absolute; top: 4px; left: 30%; width: 40%; height: 10px; background: linear-gradient(90deg, transparent, #394e7029 38%, #394e7029 62%, transparent); }
-.meter-needle { position: absolute; z-index: 1; top: 3px; left: 50%; width: 12px; height: 12px; transform: translateX(-50%); border: 2px solid #aeb9cd; border-radius: 50%; background: #34415d; box-shadow: 0 0 0 1px #34415d; transition: left 65ms linear; }
+.meter-needle { position: absolute; z-index: 1; top: 3px; left: 50%; width: 12px; height: 12px; transform: translateX(-50%); border: 2px solid #aeb9cd; border-radius: 50%; background: #34415d; box-shadow: 0 0 0 1px #34415d; opacity: 0; }
+.meter-needle.hit { animation: needle-decay 1.8s linear forwards; }
+@keyframes needle-decay { 0% { opacity: 0; } 5% { opacity: 1; } 16% { opacity: 1; } 100% { opacity: 0; } }
 .beat-runner { position: absolute; top: 17px; left: 1px; right: 1px; height: 4px; display: grid; grid-template-columns: repeat(33, minmax(0, 1fr)); gap: 2px; pointer-events: none; }
 .beat-runner span { background: #2d3b59; opacity: 0; }
 .meter-track.early .meter-needle, .meter-track.late .meter-needle { background: #69738a; box-shadow: 0 0 0 1px #69738a; }
@@ -254,4 +256,4 @@ h1 { margin: 0; color: var(--print); font-family: 'Brush Script MT', 'Snell Roun
 }
 @media (max-width: 350px) { h1 { font-size: 25px; } }
 @media (max-height: 780px) and (min-width: 561px) { #app { padding: 8px; } .pedal { zoom: .91; } }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } .status-light.running, .pedal:has(.status-light.running) .footswitch::after, .pedal:has(.status-light.running) .lever-selector::after { animation: none; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } .status-light.running, .pedal:has(.status-light.running) .footswitch::after, .pedal:has(.status-light.running) .lever-selector::after, .meter-needle.hit { animation: none; } .meter-needle.hit { opacity: 1; } }

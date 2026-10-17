@@ -156,7 +156,11 @@ function receiveTiming(event: TimingEvent): void {
   const offset = Math.round(event.correctedOffsetMs);
   const onTime = Math.abs(offset) <= 20;
   const position = Math.max(-50, Math.min(50, event.correctedOffsetMs));
-  element<HTMLElement>('#meter-needle').style.left = `${50 + position}%`;
+  const needle = element<HTMLElement>('#meter-needle');
+  needle.style.left = `${50 + position}%`;
+  needle.classList.remove('hit');
+  void needle.offsetWidth;
+  needle.classList.add('hit');
   element<HTMLElement>('#meter-track').className = `meter-track ${onTime ? 'on-time' : offset < 0 ? 'early' : 'late'}`;
   element<HTMLElement>('#offset-value').textContent = `${offset > 0 ? '+' : ''}${offset}`;
   element<HTMLElement>('#offset-label').textContent = onTime ? 'On time' : offset < 0 ? 'Early' : 'Late';
@@ -192,6 +196,7 @@ function updateRunning(running: boolean): void {
   if (running) beatFrame = requestAnimationFrame(renderBeat);
   if (!running) {
     cancelAnimationFrame(beatFrame);
+    element<HTMLElement>('#meter-needle').classList.remove('hit');
     renderRunner(null);
     element<HTMLElement>('#beat-strip').querySelectorAll('span').forEach((dot) => dot.classList.remove('current', 'pulse'));
     element<HTMLElement>('#signal-fill').style.width = '0%';
@@ -250,6 +255,7 @@ async function togglePractice(): Promise<void> {
     element<HTMLElement>('#offset-label').textContent = 'Play with the click';
     element<HTMLElement>('#timing-readout').className = 'timing-readout';
     element<HTMLElement>('#meter-needle').style.left = '50%';
+    element<HTMLElement>('#meter-needle').classList.remove('hit');
     element<HTMLElement>('#meter-track').className = 'meter-track';
     updateRunning(true);
     setStatus('Listening · play with the click', 'running');
