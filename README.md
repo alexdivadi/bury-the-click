@@ -42,8 +42,11 @@ The code map and instructions for changing controls or adding another pedal are 
 
 ```sh
 npm test
+npm run test:gold
 npm run build
 ```
+
+The gold-standard suite compares well-timed and mistimed patterns across simple beats, syncopated sixteenths, a 4:3 cross-rhythm, and 3/4 and 5/4. Synthesized audio also checks note detection, connected notes, vibrato, and click bleed. Pocket scoring remains based on sixteenth-note targets.
 
 Display fonts: [DSEG7 and DSEG14 Classic](https://github.com/keshikan/DSEG), licensed under SIL Open Font License 1.1. The license is in [`public/fonts/DSEG-LICENSE.txt`](public/fonts/DSEG-LICENSE.txt).
 Title font: [Yellowtail](https://github.com/google/fonts/tree/main/apache/yellowtail), licensed under Apache 2.0. The license is in [`public/fonts/Yellowtail-LICENSE.txt`](public/fonts/Yellowtail-LICENSE.txt).

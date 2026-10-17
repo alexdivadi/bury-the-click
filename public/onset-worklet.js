@@ -10,11 +10,22 @@ class NoteOnsetProcessor extends AudioWorkletProcessor {
     this.slow = 0.0001;
     this.armed = true;
     this.onsetPeak = 0;
+    this.retriggerReady = false;
     this.candidate = null;
     this.lastOnset = -1;
     this.lastSignalReport = 0;
     this.sensitivity = 55;
     this.clicks = [];
+    this.pitchSamples = new Float32Array(512);
+    this.pitchDecimation = Math.max(1, Math.round(sampleRate / 8000));
+    this.pitchRate = sampleRate / this.pitchDecimation;
+    this.pitchSum = 0;
+    this.pitchStep = 0;
+    this.pitchCount = 0;
+    this.stablePitch = 0;
+    this.pitchCandidate = 0;
+    this.pitchCandidateCount = 0;
+    this.pitchCandidateStart = 0;
     this.port.onmessage = ({ data }) => {
       if (data.type === 'sensitivity') this.sensitivity = data.value;
       if (data.type === 'click') this.clicks.push(data.time);
@@ -47,6 +58,92 @@ class NoteOnsetProcessor extends AudioWorkletProcessor {
     );
   }
 
+  estimatePitch(gate) {
+    const head = this.pitchCount - 1;
+    let recentEnergy = 0;
+    for (let index = 0; index < 256; index++) {
+      const sample = this.pitchSamples[(head - index) & 511];
+      recentEnergy += sample * sample;
+    }
+    if (Math.sqrt(recentEnergy / 256) < gate * 3) return null;
+
+    const firstLag = Math.ceil(this.pitchRate / 600);
+    const lastLag = Math.min(255, Math.floor(this.pitchRate / 40));
+    let older = 0;
+    let previous = 0;
+    for (let lag = firstLag; lag <= lastLag; lag++) {
+      let correlation = 0;
+      let pastEnergy = 0;
+      for (let index = 0; index < 256; index++) {
+        const recent = this.pitchSamples[(head - index) & 511];
+        const past = this.pitchSamples[(head - index - lag) & 511];
+        correlation += recent * past;
+        pastEnergy += past * past;
+      }
+      const score = correlation / Math.sqrt(recentEnergy * pastEnergy || 1);
+      if (lag > firstLag + 1 && previous > older && previous >= score && previous > 0.88)
+        return { frequency: this.pitchRate / (lag - 1), periodicity: previous };
+      older = previous;
+      previous = score;
+    }
+    return null;
+  }
+
+  trackPitch(sample, time, gate) {
+    this.pitchSum += sample;
+    if (++this.pitchStep < this.pitchDecimation) return;
+    this.pitchSamples[this.pitchCount & 511] = this.pitchSum / this.pitchDecimation;
+    this.pitchCount++;
+    this.pitchSum = 0;
+    this.pitchStep = 0;
+    if (this.pitchCount < 512 || this.pitchCount % 128 !== 0) return;
+
+    const estimate = this.estimatePitch(gate);
+    if (estimate === null) {
+      this.pitchCandidateCount = 0;
+      return;
+    }
+    const pitch = estimate.frequency;
+    if (!this.stablePitch) {
+      if (this.pitchCandidateCount > 0 && Math.abs(Math.log2(pitch / this.pitchCandidate)) < 0.05)
+        this.pitchCandidateCount++;
+      else {
+        this.pitchCandidate = pitch;
+        this.pitchCandidateCount = 1;
+      }
+      if (this.pitchCandidateCount >= 3) {
+        this.stablePitch = pitch;
+        this.pitchCandidateCount = 0;
+      }
+      return;
+    }
+    if (Math.abs(Math.log2(pitch / this.stablePitch)) < 0.08) {
+      this.pitchCandidateCount = 0;
+      return;
+    }
+    if (this.pitchCandidateCount > 0 && Math.abs(Math.log2(pitch / this.pitchCandidate)) < 0.05)
+      this.pitchCandidateCount++;
+    else {
+      this.pitchCandidate = pitch;
+      this.pitchCandidateCount = 1;
+      this.pitchCandidateStart = time;
+    }
+    if (this.pitchCandidateCount < 3) return;
+    this.pitchCandidateCount = 0;
+    this.stablePitch = pitch;
+    if (time - this.lastOnset < 0.12) return;
+    // The pitch window sees a change after it begins; backdate the first changed window.
+    const timestamp = this.pitchCandidateStart - 0.05;
+    this.lastOnset = time;
+    this.port.postMessage({
+      type: 'onset',
+      timestamp,
+      amplitude: this.fast,
+      confidence: estimate.periodicity,
+      clickBleed: false,
+    });
+  }
+
   process(inputs) {
     const channel = inputs[0]?.[0];
     if (!channel) return true;
@@ -69,6 +166,7 @@ class NoteOnsetProcessor extends AudioWorkletProcessor {
       energy += input * input;
       const time = (currentFrame + i) / sampleRate;
       const threshold = Math.max(gate, this.slow * ratio);
+      this.trackPitch(this.highPass, time, gate);
       const freshAttack = this.fast > earlierFast * 1.35 && this.fast > threshold * 0.6;
       if (this.candidate) {
         this.candidate.samples.push(input);
@@ -85,21 +183,29 @@ class NoteOnsetProcessor extends AudioWorkletProcessor {
           });
           // A leaked click must not consume the refractory period for a real note
           // that arrives just after it.
-          if (clickBleed) this.lastOnset = timestamp - 0.07;
+          if (clickBleed) {
+            this.lastOnset = timestamp - 0.07;
+            this.retriggerReady = true;
+          }
           this.candidate = null;
         }
       }
       if (
         time - this.lastOnset > 0.07 &&
-        ((this.armed && this.fast > threshold) || (!this.armed && freshAttack))
+        ((this.armed && this.fast > threshold) ||
+          (!this.armed && this.retriggerReady && freshAttack))
       ) {
         this.armed = false;
+        this.retriggerReady = false;
         this.lastOnset = time;
+        this.stablePitch = 0;
+        this.pitchCandidateCount = 0;
         this.onsetPeak = this.fast;
         this.candidate = { timestamp: time, peak: this.fast, threshold, samples: [input] };
       }
       if (!this.armed) {
         this.onsetPeak = Math.max(this.onsetPeak, this.fast);
+        if (this.fast < this.onsetPeak * 0.7) this.retriggerReady = true;
         if (
           this.fast < this.onsetPeak * 0.25 &&
           this.fast < threshold * 0.7 &&

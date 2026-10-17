@@ -9,6 +9,7 @@
     "format": "prettier --write src tests vite.config.ts",
     "format:check": "prettier --check src tests vite.config.ts",
     "test": "node --experimental-strip-types --test tests/*.test.ts && vitest run",
+    "test:gold": "node --experimental-strip-types --test tests/gold-standard.test.ts tests/onset.test.ts",
     "test:ui": "vitest run"
   },
   "devDependencies": {
