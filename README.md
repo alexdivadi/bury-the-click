@@ -40,3 +40,7 @@ npm run build
 ```
 
 Display fonts: [DSEG7 and DSEG14 Classic](https://github.com/keshikan/DSEG), licensed under SIL Open Font License 1.1. The license is in [`public/fonts/DSEG-LICENSE.txt`](public/fonts/DSEG-LICENSE.txt).
+
+## License
+
+The source code is [MIT licensed](LICENSE). The DSEG fonts retain their own license. Photographic and pedal-derived imagery in `public/` and `docs/` is not covered by the MIT license.
