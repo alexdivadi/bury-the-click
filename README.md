@@ -13,7 +13,7 @@ Open the local URL shown by Vite. Live audio requires **HTTPS or localhost** and
 
 ## Controls
 
-- Drag the tempo or sensitivity knob left and right; arrow keys also work when a knob is focused.
+- Drag the tempo or input gain knob left and right, or use arrow keys when focused. Double-click a knob to reset it (80 BPM or 55% gain).
 - Tap the Note Grid switch to cycle through quarter, eighth, and sixteenth notes, or drag it left and right to choose a position. Arrow keys also work when the switch is focused. The audible click stays on quarter notes while the timing grid follows the selected subdivision.
 - Tap the footswitch to start or stop. The pedal reports timing against the nearest grid position.
 - Press the **Input** jack to cycle through available audio sources with the arrow buttons, calibrate delay while the metronome is running, or reset the offset. Calibration is saved locally for each selected device.

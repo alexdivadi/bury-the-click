@@ -271,6 +271,7 @@ function updateKnob(kind: 'tempo' | 'sens', value: number): void {
 function installKnob(kind: 'tempo' | 'sens'): void {
   const knob = element<HTMLElement>(kind === 'tempo' ? '#tempo-knob' : '#sens-knob');
   const current = () => kind === 'tempo' ? bpm : sensitivity;
+  knob.addEventListener('dblclick', () => updateKnob(kind, kind === 'tempo' ? 80 : 55));
   knob.addEventListener('pointerdown', (event) => {
     knob.setPointerCapture(event.pointerId);
     const originX = event.clientX;
