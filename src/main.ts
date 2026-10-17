@@ -44,6 +44,8 @@ app.innerHTML = `
     <div class="overlay" id="calibration-overlay" hidden><div class="overlay-card calibration-card" role="dialog" aria-modal="true" aria-labelledby="cal-title"><button class="close-button" id="close-calibration" aria-label="Cancel calibration">×</button><h2 id="cal-title">Calibrate</h2><p class="overlay-copy">Play one note per click at <strong id="cal-bpm">80 bpm</strong>.</p><div class="calibration-face"><div class="cal-beat" id="cal-beat"><small>Click</small><strong id="cal-beat-number">1</strong></div><div class="cal-count"><strong id="cal-count">0</strong><span>of 8 notes heard</span></div></div><div class="cal-progress" id="cal-progress" role="progressbar" aria-label="Calibration progress" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="cal-monitor"><span>Input</span><div class="cal-monitor-track"><i id="cal-signal-fill"></i></div></div><p class="cal-hint" id="cal-hint"></p></div></div>
   </main>`;
 
+app.append(...Array.from(app.querySelectorAll<HTMLElement>('.overlay')));
+
 const element = <T extends HTMLElement>(selector: string) => app.querySelector<T>(selector)!;
 const engine = new WebAudioEngine({ onTiming: receiveTiming, onSignal: updateSignal, onError: audioError });
 let bpm = 80;
