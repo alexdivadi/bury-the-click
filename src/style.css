@@ -168,9 +168,13 @@ h1 { margin: 0; color: var(--print); font-family: 'Brush Script MT', 'Snell Roun
 .input-jack:hover { filter: brightness(.88) saturate(.5); }
 .input-jack:active { transform: translateX(2px); }
 .pedal-footer { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; margin-top: auto; padding: 21px 0 8px; }
-.status-light { position: absolute; top: 15px; left: calc(50% - 4px); width: 8px; height: 8px; border: 1px solid #050505; border-radius: 50%; background: #2b2d2d; }
-.status-light.running { background: var(--red); box-shadow: 0 0 8px #ed4745; }
-.status-light.warning { background: #e4b06b; box-shadow: 0 0 8px #e4b06b; }
+.status-light { position: absolute; top: 7px; left: calc(50% - 10px); width: 20px; height: 20px; border-radius: 50%; background: url('/status-lamp.png') center / contain no-repeat; filter: brightness(.28) saturate(.5); }
+.status-light.running { filter: brightness(1.25); box-shadow: 0 0 8px 2px #e5362d66, 0 0 20px 6px #e5362d24; animation: lamp-flicker 8s linear infinite; }
+.status-light.warning { filter: hue-rotate(42deg) brightness(1.1) drop-shadow(0 0 5px #dca34b); }
+@keyframes lamp-flicker {
+  0%, 47%, 49%, 82%, 84%, 100% { filter: brightness(1.25); box-shadow: 0 0 8px 2px #e5362d66, 0 0 20px 6px #e5362d24; }
+  48%, 83% { filter: brightness(1.17); box-shadow: 0 0 7px 2px #e5362d5c, 0 0 18px 5px #e5362d20; }
+}
 .footswitch { width: 80px; height: 80px; margin-top: 7px; padding: 0; border: 0; background: url('/footswitch-photo.png') center / contain no-repeat; filter: drop-shadow(0 5px 4px #0009); }
 .footswitch:active, .footswitch[aria-pressed='true'] { transform: translateY(2px); filter: drop-shadow(0 2px 2px #0009); }
 
@@ -242,4 +246,4 @@ h1 { margin: 0; color: var(--print); font-family: 'Brush Script MT', 'Snell Roun
 }
 @media (max-width: 350px) { h1 { font-size: 25px; } }
 @media (max-height: 780px) and (min-width: 561px) { #app { padding: 8px; } .pedal { zoom: .91; } }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } .status-light.running { animation: none; } }
