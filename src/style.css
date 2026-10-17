@@ -136,10 +136,9 @@ h1 { margin: 0; color: var(--print); font-family: 'Brush Script MT', 'Snell Roun
 
 .control-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; padding: 20px 38px 0; }
 .knob-control { display: flex; flex-direction: column; align-items: center; gap: 9px; }
-.knob { position: relative; width: 62px; height: 62px; margin: 0 0 3px; touch-action: none; cursor: ew-resize; border: 2px solid #070809; border-radius: 50%; background: repeating-conic-gradient(from 1deg, #27292a 0deg 3deg, #363839 3deg 5deg, #202223 5deg 7deg); box-shadow: 0 3px 1px #050607, 0 7px 8px #0008, inset 0 1px 1px #ffffff55; }
-.knob::before { content: ''; position: absolute; inset: 6px; border: 1px solid #55595a; border-radius: 50%; background: linear-gradient(130deg, #4a4c4d, #222425 55%, #343637); box-shadow: inset 0 1px 2px #ffffff28; }
-.knob::after { content: ''; position: absolute; inset: -7px; border: 1px dashed #d0cec288; border-radius: 50%; pointer-events: none; }
-.knob-indicator { position: absolute; top: 7px; left: calc(50% - 1px); width: 2px; height: 13px; transform-origin: 1px 22px; transform: rotate(var(--rotation, 0deg)); background: #eceae2; }
+.knob { position: relative; width: 72px; height: 72px; margin: 0 0 3px; touch-action: none; cursor: ew-resize; }
+.knob::after { content: ''; position: absolute; inset: -3px; border: 1px dashed #d0cec288; border-radius: 50%; pointer-events: none; }
+.knob-indicator { position: absolute; inset: 0; background: url('/knob-photo.png') center / contain no-repeat; transform: rotate(var(--rotation, 0deg)); pointer-events: none; }
 
 .routing-row { display: flex; justify-content: center; min-height: 103px; padding: 7px 30px 0; }
 .routing-group { display: flex; flex-direction: column; align-items: center; min-width: 0; }
@@ -171,9 +170,8 @@ h1 { margin: 0; color: var(--print); font-family: 'Brush Script MT', 'Snell Roun
 .status-light { position: absolute; top: 15px; left: calc(50% - 4px); width: 8px; height: 8px; border: 1px solid #050505; border-radius: 50%; background: #2b2d2d; }
 .status-light.running { background: var(--red); box-shadow: 0 0 8px #ed4745; }
 .status-light.warning { background: #e4b06b; box-shadow: 0 0 8px #e4b06b; }
-.footswitch { width: 70px; height: 70px; margin-top: 7px; padding: 8px; border: 2px solid #171818; border-radius: 50%; clip-path: polygon(24% 0, 76% 0, 100% 24%, 100% 76%, 76% 100%, 24% 100%, 0 76%, 0 24%); background: linear-gradient(130deg, #e7e7e4, #898a88 26%, #d0d0cc 51%, #696b69 76%, #f0f0ed); box-shadow: 0 2px 0 #151c19, 0 7px 6px #0008; }
-.switch-inner { display: block; height: 100%; border: 1px solid #5c5d5c; border-radius: 50%; background: radial-gradient(circle at 35% 25%, #e4e5e2, #8e908e 47%, #515352 75%, #b8bab7); box-shadow: inset 0 2px 3px #ffffff5b, 0 2px 3px #0008; }
-.footswitch:active, .footswitch[aria-pressed='true'] { transform: translateY(2px); box-shadow: 0 1px 0 #151c19, 0 3px 3px #0008; }
+.footswitch { width: 80px; height: 80px; margin-top: 7px; padding: 0; border: 0; background: url('/footswitch-photo.png') center / contain no-repeat; filter: drop-shadow(0 5px 4px #0009); }
+.footswitch:active, .footswitch[aria-pressed='true'] { transform: translateY(2px); filter: drop-shadow(0 2px 2px #0009); }
 
 .overlay[hidden] { display: none; }
 .overlay { position: absolute; z-index: 10; inset: 7px; display: grid; place-items: center; padding: 16px; border-radius: 9px; background: #050506de; backdrop-filter: blur(4px); }
