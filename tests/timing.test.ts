@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { beatPosition, TimingGrid } from '../src/timing/grid.ts';
-import { median, sessionMetrics } from '../src/timing/metrics.ts';
+import { averageAbsoluteError, median } from '../src/timing/metrics.ts';
 
 test('matches early and late notes on the audio clock', () => {
   const grid = new TimingGrid(1, 80, 1);
@@ -22,12 +22,13 @@ test('uses the selected subdivision and applies calibration once', () => {
 test('average error does not cancel early and late notes', () => {
   const grid = new TimingGrid(1, 60, 1);
   const events = [0.96, 2.04, 2.96, 4.04].map((time) => grid.match(time, 0.2, 1)!);
-  assert.deepEqual(sessionMetrics(events), { averageError: 40, lock: 0 });
+  assert.equal(averageAbsoluteError(events), 40);
   assert.equal(median([12, 10, 40, 11]), 11.5);
 });
 
 test('beat indicator follows the same audio-clock anchor as the timing grid', () => {
   assert.equal(beatPosition(1, 120, 0.9), null);
-  assert.deepEqual(beatPosition(1, 120, 1), { beat: 1, phase: 0 });
-  assert.deepEqual(beatPosition(1, 120, 2.25), { beat: 3, phase: 0.5 });
+  assert.deepEqual(beatPosition(1, 120, 1), { beat: 1, phase: 0, measureIndex: 0 });
+  assert.deepEqual(beatPosition(1, 120, 2.25), { beat: 3, phase: 0.5, measureIndex: 0 });
+  assert.deepEqual(beatPosition(1, 120, 3), { beat: 1, phase: 0, measureIndex: 1 });
 });

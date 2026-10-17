@@ -6,8 +6,8 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build && node scripts/build-pwa.mjs",
     "preview": "vite preview --host 0.0.0.0",
-    "format": "prettier --write src tests/ui vite.config.ts",
-    "format:check": "prettier --check src tests/ui vite.config.ts",
+    "format": "prettier --write src tests vite.config.ts",
+    "format:check": "prettier --check src tests vite.config.ts",
     "test": "node --experimental-strip-types --test tests/*.test.ts && vitest run",
     "test:ui": "vitest run"
   },

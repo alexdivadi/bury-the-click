@@ -10,7 +10,7 @@ A browser-based timing pedal. It plays a click, listens to your instrument throu
 2. Press **Input** and allow microphone access. Choose the audio source with the arrow buttons. Play a few notes to check the live input meter; if it reports clipping, lower the level on your interface.
 3. Set **Tempo** and **Input Gain** by dragging each dial horizontally. Gain changes how readily a note is detected. Double-click a dial to reset it to 80 BPM or 55%.
 4. Set **Note Grid** to quarter, eighth, or sixteenth notes. Tap the lever to cycle states or drag it sideways. The audible click stays on quarter notes.
-5. Press **Start / Stop** to begin or end a session. Play with the click. The display shows each note's offset in milliseconds, a position on the early-to-late line, average error, and the percentage of notes within the timing pocket.
+5. Press **Start / Stop** to begin or end a session. Play with the click. The display shows each note's offset in milliseconds, a position on the early-to-late line, and average error. **IN POCKET %** updates after each complete two-measure block with consistent playing; sparse blocks leave the previous score in place.
 
 For a more accurate reading, open **Input** and choose **Calibrate with 8 notes**. Play one note on each click until all eight are heard. The pedal measures input delay and saves the adjustment for that audio source. **Clear** removes it.
 

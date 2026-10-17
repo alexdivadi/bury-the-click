@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { cycleInputDevice, listInputs, type InputDevice } from '../../audio/inputDevices.ts';
 import { WebAudioEngine } from '../../audio/WebAudioEngine.ts';
 import { median } from '../../timing/metrics.ts';
+import { advancePocketState, initialPocketState } from '../../timing/pocket.ts';
+import type { PocketState } from '../../timing/pocket.ts';
 import type { Subdivision, TimingEvent } from '../../timing/grid.ts';
 import { readCalibration, removeCalibration, writeCalibration } from './calibration.ts';
 import { emptySignal, signalLevel, useInputPreview } from './useInputPreview.ts';
@@ -19,6 +21,7 @@ export function usePedalSession() {
   const [status, setStatus] = useState<Status>({ text: 'Ready', tone: 'ready' });
   const [events, setEvents] = useState<TimingEvent[]>([]);
   const [latest, setLatest] = useState<TimingEvent | null>(null);
+  const [pocketPercent, setPocketPercent] = useState<number | null>(null);
   const [devices, setDevices] = useState<InputDevice[]>([]);
   const [deviceId, setDeviceId] = useState('');
   const [deviceNote, setDeviceNote] = useState('');
@@ -32,10 +35,15 @@ export function usePedalSession() {
   const modalRef = useRef<Modal>(null);
   const deviceRef = useRef('');
   const eventsRef = useRef<TimingEvent[]>([]);
+  const pocketEventsRef = useRef<TimingEvent[]>([]);
+  const pocketStateRef = useRef<PocketState>(initialPocketState);
+  const bpmRef = useRef(80);
+  const gridRef = useRef<Subdivision>(1);
   const samplesRef = useRef<number[]>([]);
   const lastSlot = useRef(Number.NEGATIVE_INFINITY);
   const lastAudible = useRef(0);
   const quietTimer = useRef<number | null>(null);
+  const pocketTimer = useRef<number | null>(null);
   const request = useRef(0);
   const handlers = useRef<{
     timing: (event: TimingEvent) => void;
@@ -66,6 +74,15 @@ export function usePedalSession() {
   const stopQuietTimer = () => {
     if (quietTimer.current !== null) window.clearInterval(quietTimer.current);
     quietTimer.current = null;
+  };
+  const resetPocket = () => {
+    pocketEventsRef.current = [];
+    pocketStateRef.current = initialPocketState;
+    setPocketPercent(null);
+  };
+  const stopPocketTimer = () => {
+    if (pocketTimer.current !== null) window.clearInterval(pocketTimer.current);
+    pocketTimer.current = null;
   };
 
   const refreshDevices = useCallback(async () => {
@@ -103,6 +120,7 @@ export function usePedalSession() {
     request.current++;
     audio.stop();
     stopQuietTimer();
+    stopPocketTimer();
     setPracticeSignal(emptySignal);
     setMode('idle');
     setStatus({ text: message, tone: 'ready' });
@@ -154,12 +172,13 @@ export function usePedalSession() {
       if (modeRef.current !== 'running') return;
       const next = [...eventsRef.current, event].slice(-128);
       eventsRef.current = next;
+      pocketEventsRef.current = [...pocketEventsRef.current, event].slice(-128);
       setEvents(next);
       setLatest(event);
       const offset = Math.round(event.correctedOffsetMs);
       const onTime = Math.abs(offset) <= 20;
       setStatus({
-        text: `Beat ${event.beat} · ${onTime ? 'In the pocket' : offset < 0 ? 'Ahead of the click' : 'Behind the click'}`,
+        text: `Beat ${event.beat} · ${onTime ? 'On time' : offset < 0 ? 'Ahead of the click' : 'Behind the click'}`,
         tone: 'running',
       });
     },
@@ -182,8 +201,10 @@ export function usePedalSession() {
 
   const changeBpm = (value: number) => {
     setBpm(value);
+    bpmRef.current = value;
     audio.setTempo(value);
     lastSlot.current = Number.NEGATIVE_INFINITY;
+    resetPocket();
   };
   const changeGain = (value: number) => {
     setGain(value);
@@ -191,8 +212,10 @@ export function usePedalSession() {
   };
   const changeGrid = (value: Subdivision) => {
     setGrid(value);
+    gridRef.current = value;
     audio.setSubdivision(value);
     lastSlot.current = Number.NEGATIVE_INFINITY;
+    resetPocket();
   };
   const changeDevice = (direction: -1 | 1) => {
     if (!devices.length) return;
@@ -220,6 +243,7 @@ export function usePedalSession() {
       await audio.start(deviceRef.current, bpm, grid, gain, calibration.value);
       if (currentRequest !== request.current) return;
       eventsRef.current = [];
+      resetPocket();
       setEvents([]);
       setLatest(null);
       lastSlot.current = Number.NEGATIVE_INFINITY;
@@ -231,6 +255,19 @@ export function usePedalSession() {
         if (!eventsRef.current.length && performance.now() - lastAudible.current > 8000)
           setStatus({ text: 'No input signal · check connection', tone: 'warning' });
       }, 3000);
+      pocketTimer.current = window.setInterval(() => {
+        const next = advancePocketState(
+          pocketEventsRef.current,
+          audio.getBeatPosition(),
+          bpmRef.current,
+          gridRef.current,
+          pocketStateRef.current,
+        );
+        if (next !== pocketStateRef.current) {
+          pocketStateRef.current = next;
+          setPocketPercent(next.percent);
+        }
+      }, 100);
     } catch (error) {
       if (currentRequest !== request.current) return;
       setMode('idle');
@@ -302,6 +339,7 @@ export function usePedalSession() {
       request.current++;
       audio.stop();
       if (quietTimer.current !== null) window.clearInterval(quietTimer.current);
+      if (pocketTimer.current !== null) window.clearInterval(pocketTimer.current);
     };
   }, [audio, refreshDevices]);
 
@@ -318,6 +356,7 @@ export function usePedalSession() {
     status,
     events,
     latest,
+    pocketPercent,
     devices,
     deviceId,
     deviceName,

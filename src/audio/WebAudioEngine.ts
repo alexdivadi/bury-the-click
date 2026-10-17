@@ -29,7 +29,7 @@ export class WebAudioEngine {
   get running(): boolean {
     return this.context !== null;
   }
-  getBeatPosition(): { beat: number; phase: number } | null {
+  getBeatPosition(): { beat: number; phase: number; measureIndex: number } | null {
     return this.context && this.grid
       ? beatPosition(this.grid.anchor, this.bpm, this.context.currentTime)
       : null;

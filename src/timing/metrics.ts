@@ -1,19 +1,10 @@
 import type { TimingEvent } from './grid.ts';
 
-export function sessionMetrics(
-  events: TimingEvent[],
-  toleranceMs = 20,
-): { averageError: number; lock: number } {
-  if (!events.length) return { averageError: 0, lock: 0 };
-  return {
-    averageError: Math.round(
-      events.reduce((sum, event) => sum + Math.abs(event.correctedOffsetMs), 0) / events.length,
-    ),
-    lock: Math.round(
-      (100 * events.filter((event) => Math.abs(event.correctedOffsetMs) <= toleranceMs).length) /
-        events.length,
-    ),
-  };
+export function averageAbsoluteError(events: TimingEvent[]): number {
+  if (!events.length) return 0;
+  return Math.round(
+    events.reduce((sum, event) => sum + Math.abs(event.correctedOffsetMs), 0) / events.length,
+  );
 }
 
 export function median(values: number[]): number {

@@ -6,6 +6,7 @@ export interface TimingEvent {
   rawOffsetMs: number;
   correctedOffsetMs: number;
   beat: number;
+  measureIndex: number;
   subdivision: number;
   confidence: number;
   amplitude: number;
@@ -39,6 +40,7 @@ export class TimingGrid {
       rawOffsetMs,
       correctedOffsetMs: rawOffsetMs - this.calibrationOffsetMs,
       beat: (Math.floor(index / this.subdivision) % 4) + 1,
+      measureIndex: Math.floor(index / (this.subdivision * 4)),
       subdivision: index % this.subdivision,
       confidence,
       amplitude,
@@ -50,9 +52,9 @@ export function beatPosition(
   anchor: number,
   bpm: number,
   timestamp: number,
-): { beat: number; phase: number } | null {
+): { beat: number; phase: number; measureIndex: number } | null {
   if (timestamp < anchor) return null;
   const beats = ((timestamp - anchor) * bpm) / 60;
   const index = Math.floor(beats);
-  return { beat: (index % 4) + 1, phase: beats - index };
+  return { beat: (index % 4) + 1, phase: beats - index, measureIndex: Math.floor(index / 4) };
 }

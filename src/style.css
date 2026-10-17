@@ -1,5 +1,6 @@
 @import './hardware/Pedal.css';
 @import './hardware/LCDScreen.css';
+@import './pedals/bury-the-click/BuryTheClickDisplay.css';
 @import './hardware/Dial.css';
 @import './hardware/Switch.css';
 @import './hardware/AudioJack.css';

@@ -1,12 +1,12 @@
 import { AudioJack } from '../../hardware/AudioJack.tsx';
 import { Dial } from '../../hardware/Dial.tsx';
 import { Footswitch } from '../../hardware/Footswitch.tsx';
-import { LCDScreen } from '../../hardware/LCDScreen.tsx';
 import { Light } from '../../hardware/Light.tsx';
 import { Pedal } from '../../hardware/Pedal.tsx';
 import { Switch } from '../../hardware/Switch.tsx';
 import type { Subdivision } from '../../timing/grid.ts';
 import { CalibrationManual } from './CalibrationManual.tsx';
+import { BuryTheClickDisplay } from './BuryTheClickDisplay.tsx';
 import { InputManual } from './InputManual.tsx';
 import { usePedalSession } from './usePedalSession.ts';
 
@@ -20,12 +20,13 @@ export function BuryTheClickPedal() {
     <>
       <Pedal texture="powder-coat" label="Bury the Click timing trainer">
         <AudioJack onPress={session.openInput} />
-        <LCDScreen
+        <BuryTheClickDisplay
           bpm={session.bpm}
           gain={session.gain}
           grid={session.grid}
           events={session.events}
           latest={session.latest}
+          pocketPercent={session.pocketPercent}
           inputName={session.deviceId ? session.deviceName : 'Default input'}
           status={session.status.text}
           running={running}

@@ -81,3 +81,13 @@
   bottom: 14px;
   right: 14px;
 }
+
+.control-label,
+.switch-label {
+  color: #c9c7be;
+  font-family: 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
