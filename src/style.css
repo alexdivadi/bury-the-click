@@ -189,7 +189,7 @@ h1 { margin: 0; color: var(--print); font-family: 'Brush Script MT', 'Snell Roun
 .footswitch:active, .footswitch[aria-pressed='true'] { transform: translateY(2px); filter: drop-shadow(0 2px 2px #0009); }
 
 .overlay[hidden] { display: none; }
-.overlay { position: absolute; z-index: 10; inset: 7px; display: grid; place-items: center; padding: 16px; border-radius: 9px; background: #050506de; backdrop-filter: blur(4px); }
+.overlay { position: absolute; z-index: 10; inset: 7px; display: grid; place-items: safe center; overflow-y: auto; padding: 16px; border-radius: 9px; background: #050506de; backdrop-filter: blur(4px); }
 .overlay-card { position: relative; width: min(100%, 400px); padding: 26px 27px; border: 4px solid #090b0d; border-radius: 4px; background: #0c1417; box-shadow: inset 0 0 0 1px #5b686947, 0 20px 42px #000d; color: var(--screen-ink); }
 .overlay-card h2 { margin: 0 28px 9px 0; font-size: 26px; font-weight: 350; letter-spacing: -.04em; }
 .close-button { position: absolute; top: 12px; right: 15px; padding: 0 5px; border: 0; background: none; color: #bfc9c3; font-size: 25px; line-height: 1; }
@@ -230,6 +230,51 @@ h1 { margin: 0; color: var(--print); font-family: 'Brush Script MT', 'Snell Roun
 .cal-monitor-track { flex: 1; height: 3px; background: #3d5450; }
 .cal-monitor-track i { display: block; width: 0; height: 100%; background: #d5dfd7; transition: width 120ms linear; }
 .cal-hint { margin: 12px 0 0; }
+
+/* The input sheet reads like printed pedal literature, with live values set into the page. */
+.input-card {
+  width: min(100%, 430px);
+  padding: 23px 27px 18px;
+  border: 1px solid #5c6260;
+  border-radius: 0;
+  background:
+    linear-gradient(125deg, #ffffff08, transparent 32%),
+    linear-gradient(#171a1a, #0e1112);
+  box-shadow: 0 18px 40px #000c, inset 0 0 0 5px #0b0d0d, inset 0 0 0 6px #62676455;
+  color: #e8e7df;
+}
+.input-card .close-button { top: 46px; right: 25px; color: #e8e7df; }
+.manual-masthead, .manual-footer { display: flex; justify-content: space-between; gap: 12px; text-transform: uppercase; font-family: 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif; font-size: 9px; font-weight: 700; letter-spacing: .07em; }
+.manual-masthead { align-items: baseline; padding-bottom: 9px; border-bottom: 2px solid #e6e5dc; }
+.manual-brand { color: #68a9c8; font-size: 15px; font-weight: 900; letter-spacing: -.06em; text-transform: none; }
+.manual-intro { padding: 27px 0 23px; }
+.manual-kicker { color: #68a9c8; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.input-card h2 { margin: 3px 0 6px; font-family: 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif; font-size: clamp(48px, 13vw, 62px); font-weight: 800; line-height: 1; letter-spacing: -.075em; text-transform: uppercase; }
+.input-card .overlay-copy { max-width: 310px; margin: 0; color: #c3c4bf; font-size: 12px; }
+.manual-section { padding: 14px 0 16px; border-top: 1px solid #878c875c; }
+.input-card .field-heading, .input-card .signal-heading { align-items: center; color: #e8e7df; font-size: 12px; font-weight: 700; }
+.manual-section b { display: inline-block; min-width: 29px; color: #68a9c8; font-family: Menlo, 'SFMono-Regular', monospace; font-size: 10px; font-weight: 400; }
+.input-card .field-heading span:last-child, .input-card .signal-heading span:last-child { color: #aab0ac; font-weight: 400; }
+.input-card .device-picker { grid-template-columns: 38px minmax(0, 1fr) 38px; gap: 0; margin-top: 11px; border: 1px solid #858d8b; background: #090d0f; }
+.input-card .device-picker button { min-height: 39px; border: 0; border-radius: 0; background: #252a2a; box-shadow: none; font-size: 24px; }
+.input-card .device-picker button:first-child { border-right: 1px solid #858d8b; }
+.input-card .device-picker button:last-child { border-left: 1px solid #858d8b; }
+.input-card #device-name { padding: 0 8px; color: #e4e8e3; font-family: Menlo, 'SFMono-Regular', monospace; font-size: 11px; }
+.input-card .signal-section, .input-card .calibration-block { margin-top: 0; }
+.input-card .signal-meter { height: 13px; margin-top: 12px; border-color: #848e8b; background: repeating-linear-gradient(90deg, #263432 0 calc(10% - 2px), #101516 calc(10% - 2px) 10%); }
+.input-card .signal-meter > span { background: #6cabc6; }
+.input-card .signal-meter.clipping > span { background: #d85d54; }
+.meter-legend { display: flex; justify-content: space-between; margin-top: 3px; color: #858f8d; font-family: Menlo, 'SFMono-Regular', monospace; font-size: 8px; }
+.input-card .calibration-block { padding-top: 14px; border-top-color: #878c875c; }
+.input-card .calibration-heading h3 { font-size: 12px; font-weight: 700; }
+.input-card .calibration-heading #calibration-value { padding: 4px 6px; border: 1px solid #4f5b59; background: #090d0f; color: #d9e1db; font-size: 10px; }
+.input-card .calibration-block p { max-width: 300px; margin: 9px 0 13px; color: #c3c4bf; }
+.input-card .cal-actions { gap: 8px; }
+.input-card .calibrate-button, .input-card .text-button { min-height: 38px; border-color: #7e8885; border-radius: 0; background: #e1e2dc; box-shadow: none; color: #141819; font-weight: 700; }
+.input-card .calibrate-button { display: flex; justify-content: space-between; align-items: center; padding: 0 12px; }
+.input-card .calibrate-button span { font-size: 17px; font-weight: 400; }
+.input-card .text-button { min-width: 55px; background: #242929; color: #e2e5df; }
+.manual-footer { padding-top: 9px; border-top: 2px solid #e6e5dc; color: #9aa29e; font-size: 8px; }
 
 @media (max-width: 560px) {
   #app { padding: 7px 36px 7px 7px; align-items: start; }
