@@ -211,7 +211,7 @@
 .display-footer {
   display: flex;
   justify-content: space-between;
-  align-items: start;
+  align-items: center;
   gap: 8px;
   min-height: 18px;
   padding-top: 5px;
@@ -221,14 +221,27 @@
   line-height: 1.25;
 }
 .display-input-name {
-  flex: 0 0 52%;
+  flex: 0 1 52%;
+  min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 .display-status {
-  flex: 1;
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: flex-end;
   text-align: right;
+}
+.display-status-text {
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.display-scroll-text {
+  display: inline-block;
+  white-space: nowrap;
 }
 .display-legend {
   display: grid;

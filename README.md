@@ -10,7 +10,7 @@ A browser-based timing pedal. It plays a click, listens to your instrument throu
 2. Press **Input** and allow microphone access. Choose the audio source with the arrow buttons. Play a few notes to check the live input meter; if it reports clipping, lower the level on your interface.
 3. Set **Tempo** and **Input Gain** by dragging each dial horizontally. Gain changes how readily a note is detected. Double-click a dial to reset it to 80 BPM or 55%.
 4. Set **Time Signature** to 3/4, 4/4, or 5/4. Tap the lever to cycle states or drag it sideways. Each click is a quarter-note beat; the first beat of each measure has a higher accent.
-5. Press **Start / Stop** to begin or end a session. Play on the beat or its sixteenth-note subdivisions. The main offset, early/late label, and timing marker position update on quarter-note beats; the timeline briefly flashes for every accepted note. **BIAS MS** shows the signed average offset, so a steady early or late tendency stays visible. **IN POCKET %** grades played notes against the sixteenth-note grid after each complete two-measure block. Rests do not lower the score; blocks with fewer than six distinct notes leave the previous score in place.
+5. Press **Start / Stop** to begin or end a session. Play on the beat or its sixteenth-note subdivisions. The main offset, early/late label, and timing marker position update on quarter-note beats; the timeline briefly flashes for every accepted note. **AVG MS** shows the signed average offset, so a steady early or late tendency stays visible. **IN POCKET %** grades played notes against the sixteenth-note grid after each complete two-measure block. Rests do not lower the score; blocks with fewer than six distinct notes leave the previous score in place.
 
 For a more accurate reading, open **Input** and choose **Calibrate with 8 notes**. Play one note on each click until all eight are heard. The pedal measures input delay and saves the adjustment for that audio source. **Clear** removes it.
 
@@ -46,7 +46,8 @@ npm run build
 ```
 
 Display fonts: [DSEG7 and DSEG14 Classic](https://github.com/keshikan/DSEG), licensed under SIL Open Font License 1.1. The license is in [`public/fonts/DSEG-LICENSE.txt`](public/fonts/DSEG-LICENSE.txt).
+Title font: [Yellowtail](https://github.com/google/fonts/tree/main/apache/yellowtail), licensed under Apache 2.0. The license is in [`public/fonts/Yellowtail-LICENSE.txt`](public/fonts/Yellowtail-LICENSE.txt).
 
 ## License
 
-The source code is [MIT licensed](LICENSE). The DSEG fonts retain their own license. Photographic and pedal-derived imagery in `public/` and `docs/` is not covered by the MIT license.
+The source code is [MIT licensed](LICENSE). The bundled fonts retain their own licenses. Photographic and pedal-derived imagery in `public/` and `docs/` is not covered by the MIT license.

@@ -15,12 +15,12 @@ vi.mock('../../src/audio/WebAudioEngine.ts', () => ({
     constructor(callbacks: { onTiming: (event: TimingEvent) => void }) {
       engine.emitTiming = callbacks.onTiming;
     }
-    async start() {}
-    stop() {}
-    setTempo() {}
-    setMeter() {}
-    setSensitivity() {}
-    setCalibration() {}
+    async start() { }
+    stop() { }
+    setTempo() { }
+    setMeter() { }
+    setSensitivity() { }
+    setCalibration() { }
     getSessionElapsed() {
       return 0;
     }
@@ -112,4 +112,47 @@ it('flashes for each accepted offbeat note without changing the quarter-note rea
   expect(container.querySelector('.meter-input-flash')).not.toBe(firstFlash);
   expect(container.querySelector('.timing-readout strong')?.textContent).toBe('--');
   unmount();
+});
+
+it('waits before scrolling an overflowing LCD message', () => {
+  const animate = vi.fn((_frames: Keyframe[]) => ({ cancel: vi.fn() }));
+  const originalAnimate = HTMLElement.prototype.animate;
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe() { }
+      disconnect() { }
+    },
+  );
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  HTMLElement.prototype.animate = animate as unknown as typeof HTMLElement.prototype.animate;
+  const width = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(60);
+  const scrollWidth = vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockReturnValue(180);
+  try {
+    const { unmount } = render(
+      <BuryTheClickDisplay
+        bpm={80}
+        gain={55}
+        meter={4}
+        events={[]}
+        latest={null}
+        pocketPercent={null}
+        inputName="A long audio interface name"
+        status="A long pocket status message"
+        running={false}
+        getBeatPosition={() => null}
+      />,
+    );
+    const frames = animate.mock.calls[0][0];
+    expect(frames[0].transform).toBe('translateX(0)');
+    expect(frames[1].transform).toBe('translateX(0)');
+    expect(frames[1].offset).toBeGreaterThan(0);
+    expect(frames[2].transform).toBe('translateX(-120px)');
+    unmount();
+  } finally {
+    HTMLElement.prototype.animate = originalAnimate;
+    width.mockRestore();
+    scrollWidth.mockRestore();
+    vi.unstubAllGlobals();
+  }
 });

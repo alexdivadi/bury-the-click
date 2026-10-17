@@ -6,6 +6,51 @@ import { TEXT } from '../../text.ts';
 
 const trail = [0.85, 0.5, 0.28, 0.16, 0.1];
 
+function ScrollingLCDText({ text, className }: { text: string; className: string }) {
+  const viewport = useRef<HTMLSpanElement>(null);
+  const content = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const outer = viewport.current;
+    const inner = content.current;
+    if (!outer || !inner || typeof ResizeObserver === 'undefined') return;
+    let animation: Animation | undefined;
+    const update = () => {
+      animation?.cancel();
+      animation = undefined;
+      const overflow = inner.scrollWidth - outer.clientWidth;
+      if (overflow <= 0 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const travel = (overflow / 35) * 1000;
+      const duration = 2000 + travel + 1000;
+      animation = inner.animate(
+        [
+          { transform: 'translateX(0)', offset: 0 },
+          { transform: 'translateX(0)', offset: 2000 / duration },
+          { transform: `translateX(-${overflow}px)`, offset: (2000 + travel) / duration },
+          { transform: `translateX(-${overflow}px)`, offset: 1 },
+        ],
+        { duration, iterations: Infinity },
+      );
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(outer);
+    observer.observe(inner);
+    update();
+    return () => {
+      observer.disconnect();
+      animation?.cancel();
+    };
+  }, [text]);
+
+  return (
+    <span className={className} ref={viewport} title={text}>
+      <span className="display-scroll-text" ref={content}>
+        {text}
+      </span>
+    </span>
+  );
+}
+
 function BeatTrack({
   running,
   bpm,
@@ -156,9 +201,9 @@ export function BuryTheClickDisplay({
           inputFlashTimestamp={events.at(-1)?.timestamp ?? null}
         />
         <div className="display-footer">
-          <span className="display-input-name">{inputName}</span>
+          <ScrollingLCDText className="display-input-name" text={inputName} />
           <span className="display-status" role="status">
-            {status}
+            <ScrollingLCDText className="display-status-text" text={status} />
           </span>
         </div>
         <div className="display-stats">
