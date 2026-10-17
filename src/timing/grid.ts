@@ -1,4 +1,4 @@
-export type Subdivision = 1 | 2 | 4;
+export type Meter = 3 | 4 | 5;
 
 export interface TimingEvent {
   timestamp: number;
@@ -7,7 +7,6 @@ export interface TimingEvent {
   correctedOffsetMs: number;
   beat: number;
   measureIndex: number;
-  subdivision: number;
   confidence: number;
   amplitude: number;
 }
@@ -15,18 +14,18 @@ export interface TimingEvent {
 export class TimingGrid {
   readonly anchor: number;
   readonly bpm: number;
-  readonly subdivision: Subdivision;
+  readonly meter: Meter;
   readonly calibrationOffsetMs: number;
 
-  constructor(anchor: number, bpm: number, subdivision: Subdivision, calibrationOffsetMs = 0) {
+  constructor(anchor: number, bpm: number, meter: Meter, calibrationOffsetMs = 0) {
     this.anchor = anchor;
     this.bpm = bpm;
-    this.subdivision = subdivision;
+    this.meter = meter;
     this.calibrationOffsetMs = calibrationOffsetMs;
   }
 
   get stepSeconds(): number {
-    return 60 / this.bpm / this.subdivision;
+    return 60 / this.bpm;
   }
 
   match(timestamp: number, amplitude: number, confidence: number): TimingEvent | null {
@@ -39,9 +38,8 @@ export class TimingGrid {
       expectedTimestamp,
       rawOffsetMs,
       correctedOffsetMs: rawOffsetMs - this.calibrationOffsetMs,
-      beat: (Math.floor(index / this.subdivision) % 4) + 1,
-      measureIndex: Math.floor(index / (this.subdivision * 4)),
-      subdivision: index % this.subdivision,
+      beat: (index % this.meter) + 1,
+      measureIndex: Math.floor(index / this.meter),
       confidence,
       amplitude,
     };
@@ -52,9 +50,14 @@ export function beatPosition(
   anchor: number,
   bpm: number,
   timestamp: number,
+  meter: Meter,
 ): { beat: number; phase: number; measureIndex: number } | null {
   if (timestamp < anchor) return null;
   const beats = ((timestamp - anchor) * bpm) / 60;
   const index = Math.floor(beats);
-  return { beat: (index % 4) + 1, phase: beats - index, measureIndex: Math.floor(index / 4) };
+  return {
+    beat: (index % meter) + 1,
+    phase: beats - index,
+    measureIndex: Math.floor(index / meter),
+  };
 }

@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { LCDScreen } from '../../hardware/LCDScreen.tsx';
 import { averageAbsoluteError } from '../../timing/metrics.ts';
-import type { Subdivision, TimingEvent } from '../../timing/grid.ts';
+import type { Meter, TimingEvent } from '../../timing/grid.ts';
 
 const trail = [0.85, 0.5, 0.28, 0.16, 0.1];
 
 function BeatTrack({
   running,
   bpm,
+  meter,
   getBeatPosition,
   tone,
   needlePosition,
@@ -15,6 +16,7 @@ function BeatTrack({
 }: {
   running: boolean;
   bpm: number;
+  meter: Meter;
   getBeatPosition: () => { beat: number; phase: number } | null;
   tone: string;
   needlePosition: number;
@@ -68,8 +70,8 @@ function BeatTrack({
         </div>
       </div>
       <div className="display-activity">
-        <div className="beat-strip" ref={strip} aria-label="Four beat click">
-          {Array.from({ length: 4 }, (_, index) => (
+        <div className="beat-strip" ref={strip} aria-label={`${meter} beat click`}>
+          {Array.from({ length: meter }, (_, index) => (
             <span key={index} />
           ))}
         </div>
@@ -81,7 +83,7 @@ function BeatTrack({
 export function BuryTheClickDisplay({
   bpm,
   gain,
-  grid,
+  meter,
   events,
   latest,
   pocketPercent,
@@ -92,7 +94,7 @@ export function BuryTheClickDisplay({
 }: {
   bpm: number;
   gain: number;
-  grid: Subdivision;
+  meter: Meter;
   events: TimingEvent[];
   latest: TimingEvent | null;
   pocketPercent: number | null;
@@ -135,6 +137,7 @@ export function BuryTheClickDisplay({
         <BeatTrack
           running={running}
           bpm={bpm}
+          meter={meter}
           getBeatPosition={getBeatPosition}
           tone={tone}
           needlePosition={needlePosition}
@@ -150,14 +153,14 @@ export function BuryTheClickDisplay({
           <strong>{events.length ? averageError : '--'}</strong>
           <strong>{pocketPercent ?? '--'}</strong>
           <strong>{gain}</strong>
-          <strong>{grid === 1 ? '1/4' : grid === 2 ? '1/8' : '1/16'}</strong>
+          <strong>{meter}/4</strong>
         </div>
       </LCDScreen>
       <div className="display-legend" aria-hidden="true">
         <span>AVG MS</span>
         <span>IN POCKET %</span>
         <span>GAIN %</span>
-        <span>GRID</span>
+        <span>METER</span>
       </div>
     </>
   );

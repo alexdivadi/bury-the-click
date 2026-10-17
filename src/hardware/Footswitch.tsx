@@ -11,7 +11,7 @@ export function Footswitch({
     <button
       type="button"
       className="footswitch"
-      aria-label={running ? 'Stop practice' : 'Start practice'}
+      aria-label={running ? 'ON' : 'OFF'}
       aria-pressed={running}
       disabled={disabled}
       onClick={onPress}

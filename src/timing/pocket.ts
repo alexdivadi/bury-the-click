@@ -1,4 +1,4 @@
-import type { Subdivision, TimingEvent } from './grid.ts';
+import type { Meter, TimingEvent } from './grid.ts';
 
 export interface PocketState {
   completedWindow: number;
@@ -17,7 +17,7 @@ export const POCKET_SETTLE_MS = 200;
 export function scorePocketWindow(
   events: readonly TimingEvent[],
   windowIndex: number,
-  subdivision: Subdivision,
+  meter: Meter,
 ): number | null {
   const firstMeasure = windowIndex * POCKET_MEASURES;
   const hits = new Map<number, TimingEvent>();
@@ -25,7 +25,7 @@ export function scorePocketWindow(
     if (event.measureIndex >= firstMeasure && event.measureIndex < firstMeasure + POCKET_MEASURES)
       hits.set(event.expectedTimestamp, event);
   }
-  const expectedSlots = 4 * POCKET_MEASURES * subdivision;
+  const expectedSlots = meter * POCKET_MEASURES;
   if (hits.size < Math.ceil(expectedSlots * POCKET_MIN_COVERAGE)) return null;
   return Math.round(
     (100 *
@@ -39,7 +39,7 @@ export function advancePocketState(
   events: readonly TimingEvent[],
   position: { beat: number; phase: number; measureIndex: number } | null,
   bpm: number,
-  subdivision: Subdivision,
+  meter: Meter,
   previous: PocketState,
 ): PocketState {
   if (!position) return previous;
@@ -50,7 +50,7 @@ export function advancePocketState(
 
   let percent = previous.percent;
   for (let window = previous.completedWindow + 1; window <= newestCompletedWindow; window++) {
-    const score = scorePocketWindow(events, window, subdivision);
+    const score = scorePocketWindow(events, window, meter);
     if (score !== null) percent = score;
   }
   return { completedWindow: newestCompletedWindow, percent };

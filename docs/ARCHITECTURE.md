@@ -17,12 +17,12 @@ scripts/build-pwa.mjs                Production asset cache generator
 
 ## How a note reaches the display
 
-1. `WebAudioEngine` schedules quarter-note clicks on the Web Audio clock. It also sends microphone samples to the onset worklet.
-2. The worklet reports a detected attack with its audio timestamp. `TimingGrid.match` finds the nearest position on the selected note grid and applies the saved input delay.
-3. `usePedalSession` accepts one result per grid position, stores up to 128 results, and updates the status. During calibration it collects eight raw offsets and saves their median for the selected input instead.
+1. `WebAudioEngine` schedules quarter-note clicks on the Web Audio clock and accents the first beat of each measure in the selected 3/4, 4/4, or 5/4 meter. It also sends microphone samples to the onset worklet.
+2. The worklet reports a detected attack with its audio timestamp. `TimingGrid.match` finds the nearest click, assigns its beat and measure, and applies the saved input delay.
+3. `usePedalSession` accepts one result per click, stores up to 128 results, and updates the status. During calibration it collects eight raw offsets and saves their median for the selected input instead.
 4. `BuryTheClickDisplay` supplies this pedal's labels, readouts, timeline, and beat lamps to the shared `LCDScreen` housing. Its beat animation reads the audio clock without rerendering the whole pedal each frame.
 
-The **IN POCKET %** readout starts at `--`. After each complete two-measure window, `advancePocketState` in `src/timing/pocket.ts` waits 200 ms for late note detections, then assesses the window. At least 75% of its grid slots must contain notes; otherwise the last score stays visible. The score is the percentage of played notes within ±20 ms of their grid positions. Tempo or note-grid changes start a fresh pocket assessment. The four exported constants in `pocket.ts` control this policy.
+The **IN POCKET %** readout starts at `--`. After each complete two-measure window, `advancePocketState` in `src/timing/pocket.ts` waits 200 ms for late note detections, then assesses the window. At least 75% of its quarter-note clicks must contain notes; otherwise the last score stays visible. The score is the percentage of played notes within ±20 ms of their clicks. Tempo or time-signature changes start a fresh pocket assessment. The four exported constants in `pocket.ts` control this policy.
 
 `usePedalSession` owns the audio engine and all session transitions. `useInputPreview` owns the separate microphone preview used while the Input manual is open. Both stop their media tracks, timers, and audio contexts when closed or unmounted. Calibration stops practice before starting its own click; it never drives the main display.
 

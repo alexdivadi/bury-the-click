@@ -4,7 +4,7 @@ import { WebAudioEngine } from '../../audio/WebAudioEngine.ts';
 import { median } from '../../timing/metrics.ts';
 import { advancePocketState, initialPocketState } from '../../timing/pocket.ts';
 import type { PocketState } from '../../timing/pocket.ts';
-import type { Subdivision, TimingEvent } from '../../timing/grid.ts';
+import type { Meter, TimingEvent } from '../../timing/grid.ts';
 import { readCalibration, removeCalibration, writeCalibration } from './calibration.ts';
 import { emptySignal, signalLevel, useInputPreview } from './useInputPreview.ts';
 
@@ -15,7 +15,7 @@ type Status = { text: string; tone: 'ready' | 'running' | 'warning' };
 export function usePedalSession() {
   const [bpm, setBpm] = useState(80);
   const [gain, setGain] = useState(55);
-  const [grid, setGrid] = useState<Subdivision>(1);
+  const [meter, setMeter] = useState<Meter>(4);
   const [mode, setModeState] = useState<Mode>('idle');
   const [modal, setModalState] = useState<Modal>(null);
   const [status, setStatus] = useState<Status>({ text: 'Ready', tone: 'ready' });
@@ -38,7 +38,7 @@ export function usePedalSession() {
   const pocketEventsRef = useRef<TimingEvent[]>([]);
   const pocketStateRef = useRef<PocketState>(initialPocketState);
   const bpmRef = useRef(80);
-  const gridRef = useRef<Subdivision>(1);
+  const meterRef = useRef<Meter>(4);
   const samplesRef = useRef<number[]>([]);
   const lastSlot = useRef(Number.NEGATIVE_INFINITY);
   const lastAudible = useRef(0);
@@ -159,7 +159,7 @@ export function usePedalSession() {
 
   handlers.current = {
     timing: (event) => {
-      // A ringing note can trigger the detector repeatedly within one grid slot.
+      // A ringing note can trigger the detector repeatedly on one click.
       if (event.expectedTimestamp === lastSlot.current) return;
       lastSlot.current = event.expectedTimestamp;
       if (modeRef.current === 'calibrating') {
@@ -210,10 +210,10 @@ export function usePedalSession() {
     setGain(value);
     audio.setSensitivity(value);
   };
-  const changeGrid = (value: Subdivision) => {
-    setGrid(value);
-    gridRef.current = value;
-    audio.setSubdivision(value);
+  const changeMeter = (value: Meter) => {
+    setMeter(value);
+    meterRef.current = value;
+    audio.setMeter(value);
     lastSlot.current = Number.NEGATIVE_INFINITY;
     resetPocket();
   };
@@ -240,7 +240,7 @@ export function usePedalSession() {
     setStatus({ text: 'Connecting audio…', tone: 'ready' });
     const currentRequest = ++request.current;
     try {
-      await audio.start(deviceRef.current, bpm, grid, gain, calibration.value);
+      await audio.start(deviceRef.current, bpm, meter, gain, calibration.value);
       if (currentRequest !== request.current) return;
       eventsRef.current = [];
       resetPocket();
@@ -260,7 +260,7 @@ export function usePedalSession() {
           pocketEventsRef.current,
           audio.getBeatPosition(),
           bpmRef.current,
-          gridRef.current,
+          meterRef.current,
           pocketStateRef.current,
         );
         if (next !== pocketStateRef.current) {
@@ -299,7 +299,14 @@ export function usePedalSession() {
     setHint('Connecting input…');
     const currentRequest = ++request.current;
     try {
-      await audio.start(deviceRef.current, bpm, 1, gain, calibration.value, 'calibration');
+      await audio.start(
+        deviceRef.current,
+        bpm,
+        meterRef.current,
+        gain,
+        calibration.value,
+        'calibration',
+      );
       if (currentRequest !== request.current) return;
       setHint('');
     } catch (error) {
@@ -350,7 +357,7 @@ export function usePedalSession() {
   return {
     bpm,
     gain,
-    grid,
+    meter,
     mode,
     modal,
     status,
@@ -368,7 +375,7 @@ export function usePedalSession() {
     getBeatPosition,
     changeBpm,
     changeGain,
-    changeGrid,
+    changeMeter,
     changeDevice,
     togglePractice,
     beginCalibration,

@@ -1,4 +1,4 @@
-import { beatPosition, TimingGrid, type Subdivision, type TimingEvent } from '../timing/grid.ts';
+import { beatPosition, TimingGrid, type Meter, type TimingEvent } from '../timing/grid.ts';
 export interface AudioCallbacks {
   onTiming: (event: TimingEvent) => void;
   onSignal: (level: number, clipping: boolean) => void;
@@ -17,7 +17,7 @@ export class WebAudioEngine {
   private clickIndex = 0;
   private grid: TimingGrid | null = null;
   private bpm = 80;
-  private subdivision: Subdivision = 1;
+  private meter: Meter = 4;
   private calibrationOffsetMs = 0;
   private startGeneration = 0;
   private callbacks: AudioCallbacks;
@@ -31,14 +31,14 @@ export class WebAudioEngine {
   }
   getBeatPosition(): { beat: number; phase: number; measureIndex: number } | null {
     return this.context && this.grid
-      ? beatPosition(this.grid.anchor, this.bpm, this.context.currentTime)
+      ? beatPosition(this.grid.anchor, this.bpm, this.context.currentTime, this.meter)
       : null;
   }
 
   async start(
     deviceId: string,
     bpm: number,
-    subdivision: Subdivision,
+    meter: Meter,
     sensitivity: number,
     calibrationOffsetMs: number,
     mode: 'practice' | 'calibration' = 'practice',
@@ -100,7 +100,7 @@ export class WebAudioEngine {
           this.callbacks.onError('Audio paused by the browser. Tap the switch to restart.');
       };
       this.bpm = bpm;
-      this.subdivision = subdivision;
+      this.meter = meter;
       this.calibrationOffsetMs = calibrationOffsetMs;
       this.reanchor();
       if (mode === 'practice') this.startHum(context);
@@ -116,8 +116,8 @@ export class WebAudioEngine {
     this.bpm = bpm;
     if (this.context) this.reanchor();
   }
-  setSubdivision(subdivision: Subdivision): void {
-    this.subdivision = subdivision;
+  setMeter(meter: Meter): void {
+    this.meter = meter;
     if (this.context) this.reanchor();
   }
   setSensitivity(value: number): void {
@@ -125,19 +125,14 @@ export class WebAudioEngine {
   }
   setCalibration(value: number): void {
     this.calibrationOffsetMs = value;
-    if (this.grid) this.grid = new TimingGrid(this.grid.anchor, this.bpm, this.subdivision, value);
+    if (this.grid) this.grid = new TimingGrid(this.grid.anchor, this.bpm, this.meter, value);
   }
 
   private reanchor(): void {
     if (!this.context) return;
     this.nextClick = this.context.currentTime + 0.12;
     this.clickIndex = 0;
-    this.grid = new TimingGrid(
-      this.nextClick,
-      this.bpm,
-      this.subdivision,
-      this.calibrationOffsetMs,
-    );
+    this.grid = new TimingGrid(this.nextClick, this.bpm, this.meter, this.calibrationOffsetMs);
   }
 
   private scheduleClicks(): void {
@@ -145,7 +140,7 @@ export class WebAudioEngine {
     if (!context || context.state !== 'running') return;
     while (this.nextClick < context.currentTime + 0.1) {
       if (this.nextClick >= context.currentTime)
-        this.playClick(this.nextClick, this.clickIndex % 4 === 0);
+        this.playClick(this.nextClick, this.clickIndex % this.meter === 0);
       this.nextClick += 60 / this.bpm;
       this.clickIndex++;
     }

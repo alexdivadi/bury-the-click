@@ -40,14 +40,14 @@ describe('hardware controls', () => {
 
   it('cycles a three position switch and clamps keyboard movement', () => {
     const change = vi.fn();
-    const options = ['Quarter notes', 'Eighth notes', 'Sixteenth notes'] as const;
+    const options = ['3/4', '4/4', '5/4'] as const;
     const { rerender } = render(
-      <Switch label="Note grid" options={options} value={0} onChange={change} />,
+      <Switch label="Time signature" options={options} value={0} onChange={change} />,
     );
-    const lever = screen.getByRole('slider', { name: 'Note grid' });
+    const lever = screen.getByRole('slider', { name: 'Time signature' });
     fireEvent.keyDown(lever, { key: ' ' });
     expect(change).toHaveBeenLastCalledWith(1);
-    rerender(<Switch label="Note grid" options={options} value={2} onChange={change} />);
+    rerender(<Switch label="Time signature" options={options} value={2} onChange={change} />);
     fireEvent.keyDown(lever, { key: 'ArrowRight' });
     expect(change).toHaveBeenLastCalledWith(2);
     fireEvent.keyDown(lever, { key: 'Home' });

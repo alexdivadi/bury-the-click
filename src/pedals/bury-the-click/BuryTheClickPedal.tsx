@@ -4,18 +4,18 @@ import { Footswitch } from '../../hardware/Footswitch.tsx';
 import { Light } from '../../hardware/Light.tsx';
 import { Pedal } from '../../hardware/Pedal.tsx';
 import { Switch } from '../../hardware/Switch.tsx';
-import type { Subdivision } from '../../timing/grid.ts';
+import type { Meter } from '../../timing/grid.ts';
 import { CalibrationManual } from './CalibrationManual.tsx';
 import { BuryTheClickDisplay } from './BuryTheClickDisplay.tsx';
 import { InputManual } from './InputManual.tsx';
 import { usePedalSession } from './usePedalSession.ts';
 
-const grids = [1, 2, 4] as const satisfies readonly Subdivision[];
+const meters = [3, 4, 5] as const satisfies readonly Meter[];
 
 export function BuryTheClickPedal() {
   const session = usePedalSession();
   const running = session.mode === 'running';
-  const gridPosition = grids.indexOf(session.grid);
+  const meterPosition = meters.indexOf(session.meter);
   return (
     <>
       <Pedal texture="powder-coat" label="Bury the Click timing trainer">
@@ -23,7 +23,7 @@ export function BuryTheClickPedal() {
         <BuryTheClickDisplay
           bpm={session.bpm}
           gain={session.gain}
-          grid={session.grid}
+          meter={session.meter}
           events={session.events}
           latest={session.latest}
           pocketPercent={session.pocketPercent}
@@ -52,13 +52,13 @@ export function BuryTheClickPedal() {
             onChange={session.changeGain}
           />
         </section>
-        <section className="routing-row" aria-label="Note grid control">
+        <section className="routing-row" aria-label="Time signature control">
           <Switch
-            label="Note grid"
-            options={['Quarter notes', 'Eighth notes', 'Sixteenth notes']}
-            marks={['¼', '⅛', '¹⁄₁₆']}
-            value={gridPosition}
-            onChange={(position) => session.changeGrid(grids[position])}
+            label="Time signature"
+            options={['3/4', '4/4', '5/4']}
+            marks={['3/4', '4/4', '5/4']}
+            value={meterPosition}
+            onChange={(position) => session.changeMeter(meters[position])}
           />
         </section>
         <footer className="pedal-footer">
