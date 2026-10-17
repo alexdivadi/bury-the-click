@@ -78,16 +78,16 @@
 <rect x="537" y="68" width="494" height="674" rx="13" fill="none" stroke="#101010" stroke-width="2"/>
 <g>
   <text class="head" x="72" y="102">INPUT</text><text class="sub" x="72" y="130">Source &amp; calibration</text>
-  <path class="line" d="M318 112 H445 L783 135"/><circle class="dot" cx="783" cy="135" r="5"/>
+  <path class="line" d="M318 112 H760 L783 135"/><circle class="dot" cx="783" cy="135" r="5"/>
   <text class="head" x="72" y="270">DISPLAY</text><text class="sub" x="72" y="298">Timing, beat &amp; stats</text>
-  <path class="line" d="M321 282 H441 L575 280"/><circle class="dot" cx="575" cy="280" r="5"/>
+  <path class="line" d="M321 280 H575"/><circle class="dot" cx="575" cy="280" r="5"/>
   <text class="head" x="72" y="460">TEMPO</text><text class="sub" x="72" y="488">Click speed</text>
-  <path class="line" d="M248 470 H434 L690 451"/><circle class="dot" cx="690" cy="451" r="5"/>
+  <path class="line" d="M248 470 H671 L690 451"/><circle class="dot" cx="690" cy="451" r="5"/>
   <text class="head" x="1122" y="382">INPUT GAIN</text><text class="sub" x="1122" y="410">Note detection level</text>
-  <path class="line" d="M1110 395 H1042 L876 451"/><circle class="dot" cx="876" cy="451" r="5"/>
+  <path class="line" d="M1110 395 H932 L876 451"/><circle class="dot" cx="876" cy="451" r="5"/>
   <text class="head" x="1122" y="545">TIME SIGNATURE</text><text class="sub" x="1122" y="573">3/4, 4/4, or 5/4 beats</text>
-  <path class="line" d="M1110 556 H1018 L783 539"/><circle class="dot" cx="783" cy="539" r="5"/>
+  <path class="line" d="M1110 556 H800 L783 539"/><circle class="dot" cx="783" cy="539" r="5"/>
   <text class="head" x="1122" y="694">START / STOP</text><text class="sub" x="1122" y="722">Footswitch</text>
-  <path class="line" d="M1110 705 H1070 V610 H835 L805 638"/><circle class="dot" cx="805" cy="638" r="5"/>
+  <path class="line" d="M1110 705 H1070 V610 H833 L805 638"/><circle class="dot" cx="805" cy="638" r="5"/>
 </g>
 </svg>
